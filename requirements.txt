@@ -1,0 +1,3 @@
+matplotlib
+Pillow
+opsdroid-get-image-size
