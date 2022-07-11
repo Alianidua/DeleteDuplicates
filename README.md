@@ -23,5 +23,5 @@ The program works in 4 steps:
 - Then, show every duplicate and wait for user confirmation for removal
 - Last, move all duplicates to BIN_DIR
 
-<ins>Note</ins>: for the moment the program is not able to efficiently detect images duplicated more than 2 times.
+<ins>Note</ins>: for the moment the program is not able to efficiently detect images duplicated 3 or more times.
 It must be runned multiple times to work properly.
