@@ -5,18 +5,32 @@ from datetime import datetime
 import matplotlib.pyplot as plt
 
 
-# The directory where your images are stored
-root_dir = "C:\\Users\\victi\\Desktop\\Gate\\Trié\\Prépa F1 2017-2019\\Snapchat"
-# The directory where you want to put your duplicated files
-bin_dir = "C:\\Users\\victi\\Desktop\\DuplicatedImages\\"
+# Load settings
+ROOT_DIR = None		# The directory where your images are stored
+BIN_DIR = None		# The directory where you want to put your duplicated files
+def load_settings():
+	global ROOT_DIR, BIN_DIR
+	with open("./settings.txt", encoding='utf-8') as settings:
+		lines = settings.readlines()
+	ROOT_DIR = lines[0].split("=")[1]
+	print(ROOT_DIR[-1])
+	while ROOT_DIR[-1] == "\\" or ROOT_DIR[-1] == " " or ROOT_DIR[-1] == "\n":
+		ROOT_DIR = ROOT_DIR[:-1]
+	while ROOT_DIR[0] == " ":
+		ROOT_DIR = ROOT_DIR[1:]
+	BIN_DIR = lines[1].split("=")[1]
+	while BIN_DIR and (BIN_DIR[-1] == "\\" or BIN_DIR[-1] == " " or BIN_DIR[-1] == "\n"):
+		BIN_DIR = BIN_DIR[:-1]
+	while BIN_DIR and BIN_DIR[0] == " ":
+		BIN_DIR = BIN_DIR[1:]
+	print(f"Settings loaded :\n\tROOT_DIR: {ROOT_DIR}\n\tBIN_DIR: {BIN_DIR}")
 
 # Return a queue with all images in root_dir
 nb_images = 0
 queue = list()
 image_extensions = ("jpg", "JPG", "png", "PNG", "jpeg", "svg")
-def list_images(directory=root_dir):
+def list_images(directory=ROOT_DIR):
 	global nb_images
-	print("Listing all images...")
 	D = os.listdir(directory)
 	for fpath in D:
 		fpath = f"{directory}/{fpath}"
@@ -68,7 +82,7 @@ def iterate_paths():
 # Show duplicates and move images to bin
 def remove_duplicates():
 	to_remove = list()
-	print(f"{len(duplicates)} duplicated files. Moving them to bin folder: {bin_dir} ...")
+	print(f"{len(duplicates)} duplicated files. Moving them to bin folder: {BIN_DIR} ...")
 	for files in duplicates:
 		# Compare creation dates
 		old, new = files[0], files[1]
@@ -79,7 +93,7 @@ def remove_duplicates():
 		# Show images
 		fig, ax = plt.subplots(1, 2)
 		fig.set_size_inches(10, 10)
-		plt.suptitle(f"Duplicated images ; the newest one will be placed in the bin folder ({bin_dir})\nOld image | New image")
+		plt.suptitle(f"Duplicated images ; the newest one will be placed in the bin folder ({BIN_DIR})\nOld image | New image")
 		ax[0].imshow(Image.open(old))
 		ax[0].set_title(f"{old}\n{datetime.fromtimestamp(old_date)}")
 		ax[1].imshow(Image.open(new))
@@ -88,20 +102,24 @@ def remove_duplicates():
 		# Append file to remove
 		to_remove.append(new)
 	# Move images
-	for duplicate_path in to_remove:
-		if os.path.exists(duplicate_path):
-			os.rename(duplicate_path, f"{bin_dir}/{duplicate_path.split('/')[-1]}")
+	if BIN_DIR:
+		for duplicate_path in to_remove:
+			if os.path.exists(duplicate_path):
+				os.rename(duplicate_path, f"{BIN_DIR}/{duplicate_path.split('/')[-1]}")
 
 
 if __name__ == "__main__":
 
 	t_start = time.time()
-	if os.path.exists(bin_dir) and os.listdir(bin_dir):
-		print("Please, make sure the following directory is empty or does not already exist :", bin_dir)
-		exit(1)
-	if not os.path.exists(bin_dir) or not os.path.isdir(bin_dir):
-		os.mkdir(bin_dir)
-	list_images(directory=root_dir)
+	load_settings()
+	if BIN_DIR:
+		if os.path.exists(BIN_DIR) and os.listdir(BIN_DIR):
+			print("Please, make sure the following directory is empty or does not already exist :", BIN_DIR)
+			exit(1)
+		if not os.path.exists(BIN_DIR) or not os.path.isdir(BIN_DIR):
+			os.mkdir(BIN_DIR)
+	print("Listing images...")
+	list_images(directory=ROOT_DIR)
 	print(nb_images, "images found")
 	iterate_paths()
 	print(f"Computing time : {round(time.time() - t_start, 2)} seconds.")

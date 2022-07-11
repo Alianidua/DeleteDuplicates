@@ -1,0 +1,2 @@
+ROOT_DIRECTORY=   C:\Users\victi\Desktop\Gate\Trié\Lycée Rosa Parks 2013-2017, Collège Bellevue 2009-2013\Pictures
+BIN_DIRECTORY=
