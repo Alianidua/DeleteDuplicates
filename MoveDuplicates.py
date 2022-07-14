@@ -2,6 +2,7 @@ import os
 import time
 import datetime as dt
 from PIL import Image
+import get_image_size
 from recordclass import recordclass
 from DuplicatesMover import DuplicatesMover
 
@@ -30,18 +31,35 @@ def load_settings():
 
 
 # Return a queue with all images in root_dir
-queue = list()
-nb_images = 0
+images, nb_images = {}, 0
 def list_images(directory=ROOT_DIR):
-    global nb_images
+    global images
     D = os.listdir(directory)
     for fpath in D:
         fpath = f"{directory}/{fpath}"
+        ext = fpath.split(".")[-1]
         if os.path.isdir(fpath):
             list_images(fpath)
-        elif fpath.split(".")[-1] in image_extensions:
-            nb_images += 1
-            queue.append(fpath)
+        elif ext in image_extensions:
+            shape = get_image_size.get_image_size(fpath)
+            if shape not in images[ext]:
+                images[ext][get_image_size.get_image_size(fpath)] = []
+            images[ext][get_image_size.get_image_size(fpath)].append(fpath)
+
+# Count number of images per extension and shape
+def count_images():
+    global nb_images
+    print("  EXT       SHAPE       NB_IMAGES")
+    for ext in image_extensions:
+        if not images[ext]:
+            continue
+        print(f"[ {ext} ]")
+        for shape in images[ext]:
+            if not images[ext][shape]:
+                continue
+            count = len(images[ext][shape])
+            print(f"\t    {shape}:     \t{count}")
+            nb_images += count
 
 
 # Compare 2 images
@@ -57,21 +75,16 @@ def compare_images(im1_pixels, im2_path, shape, locations):
 DuplicatesInfo = recordclass("DupliatesInfo", ["old", "new", "old_date", "new_date", "remove"])
 duplicates = list()
 
-
-def iterate_paths():
-    print("Iterating over all images...")
-    i = 0
-    percentage = 0
+def iterate_queue(queue, shape, i, percentage):
     while queue:
         # Iterate
         i += 1
         if i / nb_images > percentage:
             print(round(100 * percentage), "%")
             percentage += 0.05
-        # Compute new image value
+        # Compute new image values
         im1_path = queue.pop()
         image = Image.open(im1_path)
-        shape = image.size
         locations = (
             (image.width // 3, image.height // 3),
             (image.width // 5, image.height // 3),
@@ -98,6 +111,16 @@ def iterate_paths():
                 )
                 print("Duplicates :", im1_path, im2_path)
                 break
+    return i, percentage
+
+def iterate_paths():
+    print("Iterating over all images...")
+    i = 0
+    percentage = 0
+    for ext in images:
+        for shape in images[ext]:
+            queue = images[ext][shape]
+            i, percentage = iterate_queue(queue, shape, i, percentage)
     print("100 %. Done.")
 
 
@@ -112,7 +135,9 @@ if __name__ == "__main__":
             print("Please, make sure the following directory is empty or does not already exist :", BIN_DIR)
             exit(1)
     print("Listing images...")
+    images = {ext: {} for ext in image_extensions}
     list_images(directory=ROOT_DIR)
+    count_images()
     print(nb_images, "images found")
     iterate_paths()
     print(f"Computing time : {round(time.time() - t_start, 2)} seconds.")

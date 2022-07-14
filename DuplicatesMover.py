@@ -110,7 +110,7 @@ class DuplicatesMover:
         to_remove = tuple(files.new for files in self.duplicates if files.remove)
         print(f"Registered {len(to_remove)} files to move.")
         if self.BIN_DIR:
-            print(f"Moving them to bin folder: {self.BIN_DIR} ...")
+            print(f"Moving them to bin folder: {self.BIN_DIR}")
             for duplicate_path in to_remove:
                 if os.path.exists(duplicate_path):
                     os.rename(duplicate_path, f"{self.BIN_DIR}/{duplicate_path.split('/')[-1]}")
