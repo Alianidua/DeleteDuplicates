@@ -54,12 +54,18 @@ def count_images():
         if not images[ext]:
             continue
         print(f"[ {ext} ]")
+        one_or_less = []
         for shape in images[ext]:
             if not images[ext][shape]:
                 continue
             count = len(images[ext][shape])
-            print(f"\t    {shape}:     \t{count}")
-            nb_images += count
+            if count <= 1:
+                one_or_less.append(shape)
+            else:
+                print(f"\t    {shape}:     \t{count}")
+                nb_images += count
+        for shape in one_or_less:
+            images[ext].pop(shape)
 
 
 # Compare 2 images
@@ -81,7 +87,7 @@ def iterate_queue(queue, shape, i, percentage):
         i += 1
         if i / nb_images > percentage:
             print(round(100 * percentage), "%")
-            percentage += 0.05
+            percentage += 0.01
         # Compute new image values
         im1_path = queue.pop()
         image = Image.open(im1_path)

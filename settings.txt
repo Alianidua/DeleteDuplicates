@@ -1,3 +1,3 @@
-ROOT_DIRECTORY=C:\Users\victi\Desktop\images
+ROOT_DIRECTORY=C:\Users\victi\Desktop\Prépa F1 2017-2019
 BIN_DIRECTORY=C:\Users\victi\Desktop\duplicates
 FORMATS=jpg,jpeg,JPG,JPEG,png,PNG
