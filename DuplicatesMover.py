@@ -74,7 +74,7 @@ class DuplicatesMover:
         # Plt figure
         fig, ax = plt.subplots(1, 2)
         fig.set_size_inches(15, 15)
-        plt.suptitle(f"Image {self.i+1}/{self.duplicates_len}", y=0.9)
+        plt.suptitle(f"Image {self.i + 1}/{self.duplicates_len}", y=0.9)
         ax[0].imshow(Image.open(old))
         ax[0].set_title(f"Oldest image\n{old[self.root_dir_len:]}\n{old_date}", fontsize=10)
         ax[1].imshow(Image.open(new))
@@ -82,6 +82,7 @@ class DuplicatesMover:
         # Tkinter
         if self.fig_canvas:
             self.fig_canvas.get_tk_widget().destroy()
+            plt.close('all')
         self.fig_canvas = FigureCanvasTkAgg(fig, master=self.tk_root)
         self.fig_canvas.get_tk_widget().pack(side=tk.TOP)
 

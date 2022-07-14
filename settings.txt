@@ -1,2 +1,3 @@
-ROOT_DIRECTORY=C:\Users\victi\Desktop\Bébou\images
+ROOT_DIRECTORY=C:\Users\victi\Desktop\images
 BIN_DIRECTORY=
+FORMATS=jpg,JPG,png,PNG,jpeg
