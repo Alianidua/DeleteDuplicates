@@ -33,7 +33,6 @@ class DuplicatesMover:
         buttons_frame = tk.Frame(bottom_frame)
         buttons_frame.pack(side=tk.LEFT)
         # Check button
-
         self.remove = tk.BooleanVar()
         check_button = tk.Checkbutton(
             buttons_frame,
@@ -49,10 +48,12 @@ class DuplicatesMover:
         button_prev = tk.Button(buttons_frame, text="Prev", width=6, bg="#A9A9A9", command=self.prev_event)
         button_prev.pack(side=tk.LEFT)
         button_prev["font"] = font
+        tk_root.bind("<Left>", self.prev_event)
         # Button next
         button_next = tk.Button(buttons_frame, text="Next", width=6, bg="#A9A9A9", command=self.next_event)
         button_next.pack()
         button_next["font"] = font
+        tk_root.bind("<Right>", self.next_event)
         # Button confirm
         button_confirm = tk.Button(bottom_frame, text="Confirm", bg="red", command=self.confirm_event)
         button_confirm.pack(side=tk.RIGHT)
@@ -89,13 +90,13 @@ class DuplicatesMover:
     def check_image_event(self):
         self.duplicates[self.i].remove = self.remove.get()
 
-    def prev_event(self):
+    def prev_event(self, *args):
         self.i -= 1
         if self.i < 0:
             self.i = self.duplicates_len - 1
         self.display_new_images()
 
-    def next_event(self):
+    def next_event(self, *args):
         self.i += 1
         if self.i >= self.duplicates_len:
             self.i = 0
