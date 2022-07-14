@@ -1,3 +1,5 @@
 Matplotlib
 Pillow
 opsdroid-get-image-size
+tk
+recordclass

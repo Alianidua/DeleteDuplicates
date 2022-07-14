@@ -1,8 +1,9 @@
 import os
 import time
+import datetime as dt
 from PIL import Image
-from datetime import datetime
-import matplotlib.pyplot as plt
+from recordclass import recordclass
+from DuplicatesMover import DuplicatesMover
 
 
 # Load settings
@@ -49,6 +50,7 @@ def compare_images(im1_pixels, im2_path, shape, locations):
 	return im1_pixels == im2_pixels
 
 # Main loop; iterate on every images
+DuplicatesInfo = recordclass("DupliatesInfo", ["old", "new", "old_date", "new_date", "remove"])
 duplicates = list()
 def iterate_paths():
 	print("Iterating over all images...")
@@ -74,38 +76,23 @@ def iterate_paths():
 		# Compare with other images
 		for im2_path in queue:
 			if compare_images(im1_pixels, im2_path, shape, locations):
-				duplicates.append((im1_path, im2_path))
+				old, new = im1_path, im2_path
+				old_date, new_date = round(os.path.getmtime(old)), round(os.path.getmtime(new))
+				if new_date < old_date:
+					old, new = im2_path, im1_path
+					old_date, new_date = new_date, old_date
+				duplicates.append(
+					DuplicatesInfo(
+						old=old,
+						new=new,
+						old_date=dt.datetime.fromtimestamp(old_date),
+						new_date=dt.datetime.fromtimestamp(new_date),
+						remove=True,
+					)
+				)
 				print("Duplicates :", im1_path, im2_path)
 				break
 	print("100 %. Done.")
-
-# Show duplicates and move images to bin
-def remove_duplicates():
-	to_remove = list()
-	print(f"{len(duplicates)} duplicated files. Moving them to bin folder: {BIN_DIR} ...")
-	for files in duplicates:
-		# Compare creation dates
-		old, new = files[0], files[1]
-		new_date, old_date = os.path.getmtime(new), os.path.getmtime(old)
-		if new_date < old_date:
-			new, old = files[0], files[1]
-			old_date, new_date = new_date, old_date
-		# Show images
-		fig, ax = plt.subplots(1, 2)
-		fig.set_size_inches(10, 10)
-		plt.suptitle(f"Duplicated images ; the newest one will be placed in the bin folder ({BIN_DIR})\nOld image | New image")
-		ax[0].imshow(Image.open(old))
-		ax[0].set_title(f"{old}\n{datetime.fromtimestamp(old_date)}")
-		ax[1].imshow(Image.open(new))
-		ax[1].set_title(f"{new}\n{datetime.fromtimestamp(new_date)}")
-		plt.show()
-		# Append file to remove
-		to_remove.append(new)
-	# Move images
-	if BIN_DIR:
-		for duplicate_path in to_remove:
-			if os.path.exists(duplicate_path):
-				os.rename(duplicate_path, f"{BIN_DIR}/{duplicate_path.split('/')[-1]}")
 
 
 if __name__ == "__main__":
@@ -113,16 +100,16 @@ if __name__ == "__main__":
 	t_start = time.time()
 	load_settings()
 	if BIN_DIR:
-		if os.path.exists(BIN_DIR) and os.listdir(BIN_DIR):
+		if not os.path.exists(BIN_DIR):
+			os.mkdir(BIN_DIR)
+		elif os.listdir(BIN_DIR):
 			print("Please, make sure the following directory is empty or does not already exist :", BIN_DIR)
 			exit(1)
-		if not os.path.exists(BIN_DIR) or not os.path.isdir(BIN_DIR):
-			os.mkdir(BIN_DIR)
 	print("Listing images...")
 	list_images(directory=ROOT_DIR)
 	print(nb_images, "images found")
 	iterate_paths()
 	print(f"Computing time : {round(time.time() - t_start, 2)} seconds.")
-
-	# Show images
-	remove_duplicates()
+	# Show and move images
+	duplicates_mover = DuplicatesMover(ROOT_DIR, BIN_DIR, duplicates)
+	duplicates_mover.window_loop()
