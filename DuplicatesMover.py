@@ -21,7 +21,7 @@ class DuplicatesMover:
         tk_root = tk.Tk()
         self.tk_root = tk_root
         tk_root.wm_title("Duplicated images - check the images you want to remove")
-        tk_root.geometry('1200x800')
+        tk_root.geometry('1200x900')
         # Handle window closure
         tk_root.wm_protocol("WM_DELETE_WINDOW", func=DuplicatesMover.delete_window_event)
         # Fonts
@@ -29,10 +29,11 @@ class DuplicatesMover:
         font = tk.font.Font(size=20)
         # Buttons frame
         bottom_frame = tk.Frame(tk_root)
-        bottom_frame.pack(side=tk.BOTTOM)
+        bottom_frame.pack(side=tk.BOTTOM, pady=20)
         buttons_frame = tk.Frame(bottom_frame)
         buttons_frame.pack(side=tk.LEFT)
         # Check button
+
         self.remove = tk.BooleanVar()
         check_button = tk.Checkbutton(
             buttons_frame,
@@ -73,6 +74,7 @@ class DuplicatesMover:
         # Plt figure
         fig, ax = plt.subplots(1, 2)
         fig.set_size_inches(15, 15)
+        plt.suptitle(f"Image {self.i+1}/{self.duplicates_len}", y=0.9)
         ax[0].imshow(Image.open(old))
         ax[0].set_title(f"Oldest image\n{old[self.root_dir_len:]}\n{old_date}", fontsize=10)
         ax[1].imshow(Image.open(new))
@@ -100,6 +102,7 @@ class DuplicatesMover:
 
     def confirm_event(self):
         self.tk_root.destroy()
+        self.tk_root.quit()
 
     def move_images(self):
         to_remove = tuple(files.new for files in self.duplicates if files.remove)
@@ -115,7 +118,7 @@ class DuplicatesMover:
     def window_loop(self):
         # Start tkinter loop
         print(f"Detected {self.duplicates_len} duplicated files. ")
-        self.next_event()
+        self.display_new_images()
         self.tk_root.mainloop()
         # Move images
         self.move_images()
