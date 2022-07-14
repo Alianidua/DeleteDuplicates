@@ -36,7 +36,7 @@ class DuplicatesMover:
         self.remove = tk.BooleanVar()
         check_button = tk.Checkbutton(
             buttons_frame,
-            text="Remove newest image",
+            text="Remove image",
             variable=self.remove,
             onvalue=True,
             offvalue=False,

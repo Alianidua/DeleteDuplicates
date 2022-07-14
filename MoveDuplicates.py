@@ -6,13 +6,15 @@ import get_image_size
 from recordclass import recordclass
 from DuplicatesMover import DuplicatesMover
 
+
 # Load settings
 ROOT_DIR = None  # The directory where your images are stored
 BIN_DIR = None  # The directory where you want to put your duplicated files
-image_extensions = None  # The images format
+IMAGE_EXTENSIONS = None  # The images format
+PERCENTAGE = 0.05  # How frequently the program should show its progression
 
 def load_settings():
-    global ROOT_DIR, BIN_DIR, image_extensions
+    global ROOT_DIR, BIN_DIR, IMAGE_EXTENSIONS, PERCENTAGE
     with open("./settings.txt", encoding='utf-8') as settings:
         lines = settings.readlines()
     ROOT_DIR = lines[0].split("=")[1]
@@ -26,8 +28,9 @@ def load_settings():
         BIN_DIR = BIN_DIR[:-1]
     while BIN_DIR and BIN_DIR[0] == " ":
         BIN_DIR = BIN_DIR[1:]
-    image_extensions = lines[2].split("=")[1].replace(" ", "").split(",")
-    print(f"Settings loaded :\n\tROOT_DIR: {ROOT_DIR}\n\tBIN_DIR: {BIN_DIR}\n\tFORMATS: {image_extensions}")
+    IMAGE_EXTENSIONS = lines[2].split("=")[1].strip(" ").strip("\n").strip("\t").split(",")
+    PERCENTAGE = float(lines[3].split("=")[1].strip(" ").strip("\n").strip("\t").replace(" ", ""))
+    print(f"Settings loaded :\n\tROOT_DIR: {ROOT_DIR}\n\tBIN_DIR: {BIN_DIR}\n\tFORMATS: {IMAGE_EXTENSIONS}\n\tPROGRESSION_FREQUENCY: {PERCENTAGE}")
 
 
 # Return a queue with all images in root_dir
@@ -40,7 +43,7 @@ def list_images(directory=ROOT_DIR):
         ext = fpath.split(".")[-1]
         if os.path.isdir(fpath):
             list_images(fpath)
-        elif ext in image_extensions:
+        elif ext in IMAGE_EXTENSIONS:
             shape = get_image_size.get_image_size(fpath)
             if shape not in images[ext]:
                 images[ext][get_image_size.get_image_size(fpath)] = []
@@ -50,7 +53,7 @@ def list_images(directory=ROOT_DIR):
 def count_images():
     global nb_images
     print("  EXT       SHAPE       NB_IMAGES")
-    for ext in image_extensions:
+    for ext in IMAGE_EXTENSIONS:
         if not images[ext]:
             continue
         print(f"[ {ext} ]")
@@ -69,38 +72,39 @@ def count_images():
 
 
 # Compare 2 images
-def compare_images(im1_pixels, im2_path, shape, locations):
+def compare_images(im1_pixels, im2_path, draft_shape, locations):
     im2 = Image.open(im2_path)
-    if im2.size != shape:
-        return False
+    im2.draft("RGB", draft_shape)
     im2_pixels = tuple(im2.getpixel(coordinates) for coordinates in locations)
     return im1_pixels == im2_pixels
 
 
 # Main loop; iterate on every images
-DuplicatesInfo = recordclass("DupliatesInfo", ["old", "new", "old_date", "new_date", "remove"])
+DuplicatesInfo = recordclass("DuplicatesInfo", ["old", "new", "old_date", "new_date", "remove"])
 duplicates = list()
 
 def iterate_queue(queue, shape, i, percentage):
+
+    # Compute pixels positions to use for comparison
+    draft_shape = (shape[0] // 32, shape[0] // 32)
+    locations = [
+        (draft_shape[0] // i, draft_shape[0] // j) for i in range(3, 6) for j in range(3, 6)
+    ]
+
     while queue:
         # Iterate
         i += 1
         if i / nb_images > percentage:
             print(round(100 * percentage), "%")
-            percentage += 0.01
+            percentage += PERCENTAGE
         # Compute new image values
         im1_path = queue.pop()
         image = Image.open(im1_path)
-        locations = (
-            (image.width // 3, image.height // 3),
-            (image.width // 5, image.height // 3),
-            (image.width // 5, image.height // 5),
-            (image.width // 5, image.height // 5),
-        )
+        image.draft("RGB", draft_shape)
         im1_pixels = tuple(image.getpixel(coordinates) for coordinates in locations)
         # Compare with other images
         for im2_path in queue:
-            if compare_images(im1_pixels, im2_path, shape, locations):
+            if compare_images(im1_pixels, im2_path, draft_shape, locations):
                 old, new = im1_path, im2_path
                 old_date, new_date = round(os.path.getmtime(old)), round(os.path.getmtime(new))
                 if new_date < old_date:
@@ -141,10 +145,10 @@ if __name__ == "__main__":
             print("Please, make sure the following directory is empty or does not already exist :", BIN_DIR)
             exit(1)
     print("Listing images...")
-    images = {ext: {} for ext in image_extensions}
+    images = {ext: {} for ext in IMAGE_EXTENSIONS}
     list_images(directory=ROOT_DIR)
     count_images()
-    print(nb_images, "images found")
+    print(nb_images, "potential duplicated images.")
     iterate_paths()
     print(f"Computing time : {round(time.time() - t_start, 2)} seconds.")
     # Show and move images
