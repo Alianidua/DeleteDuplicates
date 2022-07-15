@@ -4,6 +4,7 @@ import datetime as dt
 from PIL import Image
 import get_image_size
 from recordclass import recordclass
+from SettingsManager import SettingsManager
 from DuplicatesMover import DuplicatesMover
 
 # Load settings
@@ -12,37 +13,6 @@ BIN_DIR = None  # The directory where you want to put your duplicated files
 IMAGE_EXTENSIONS = None  # The images format
 VIDEO_EXTENSIONS = None  # The videos format
 PERCENTAGE = 0.05  # How frequently the program should show its progression
-
-
-def load_settings():
-    global ROOT_DIR, BIN_DIR, IMAGE_EXTENSIONS, PERCENTAGE, VIDEO_EXTENSIONS
-    with open("./settings.txt", encoding="utf-8") as settings:
-        lines = settings.readlines()
-    ROOT_DIR = lines[0].split("=")[1]
-    print(ROOT_DIR[-1])
-    while ROOT_DIR[-1] == "\\" or ROOT_DIR[-1] == " " or ROOT_DIR[-1] == "\n":
-        ROOT_DIR = ROOT_DIR[:-1]
-    while ROOT_DIR[0] == " ":
-        ROOT_DIR = ROOT_DIR[1:]
-    BIN_DIR = lines[1].split("=")[1]
-    while BIN_DIR and (
-            BIN_DIR[-1] == "\\" or BIN_DIR[-1] == " " or BIN_DIR[-1] == "\n"
-    ):
-        BIN_DIR = BIN_DIR[:-1]
-    while BIN_DIR and BIN_DIR[0] == " ":
-        BIN_DIR = BIN_DIR[1:]
-    IMAGE_EXTENSIONS = (
-        lines[2].split("=")[1].strip(" ").strip("\n").strip("\t").split(",")
-    )
-    VIDEO_EXTENSIONS = (
-        lines[3].split("=")[1].strip(" ").strip("\n").strip("\t").split(",")
-    )
-    PERCENTAGE = float(
-        lines[4].split("=")[1].strip(" ").strip("\n").strip("\t")
-    )
-    print(
-        f"Settings loaded :\n\tROOT_DIR: {ROOT_DIR}\n\tBIN_DIR: {BIN_DIR}\n\tFORMATS: {IMAGE_EXTENSIONS}\n\tPROGRESSION_FREQUENCY: {PERCENTAGE}\n\tVIDEO_EXTENSIONS: {VIDEO_EXTENSIONS}\n"
-    )
 
 
 # Return a queue with all images in root_dir
@@ -206,23 +176,19 @@ def iterate_paths():
 if __name__ == "__main__":
 
     t_start = time.time()
-    load_settings()
-    if BIN_DIR:
-        if not os.path.exists(BIN_DIR):
-            os.mkdir(BIN_DIR)
-        elif os.listdir(BIN_DIR):
-            print(
-                "Please, make sure the following directory is empty or does not already exist :",
-                BIN_DIR,
-            )
-            exit(1)
+    # Load settings
+    settings_manager = SettingsManager()
+    ROOT_DIR, BIN_DIR, IMAGE_EXTENSIONS, VIDEO_EXTENSIONS, PERCENTAGE = settings_manager.get_settings()
+    # List files
     images = {ext: {} for ext in IMAGE_EXTENSIONS}
     videos = {ext: {} for ext in VIDEO_EXTENSIONS}
     print("Listing images and videos files...")
     list_files(directory=ROOT_DIR)
+    # Count files
     count_files()
     print(nb_images, "potential duplicated images.")
     print(nb_videos, "potential duplicated videos.")
+    # Start duplicates detection
     iterate_paths()
     print(f"Computing time : {round(time.time() - t_start, 2)} seconds.")
     # Show and move images

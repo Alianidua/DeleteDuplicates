@@ -24,7 +24,6 @@ class DuplicatesMover:
         tk_root = tk.Tk()
         self.tk_root = tk_root
         tk_root.wm_title("Duplicated images - check the images you want to remove")
-        tk_root.geometry("1200x900")
         # Handle window closure
         tk_root.wm_protocol(
             "WM_DELETE_WINDOW", func=DuplicatesMover.delete_window_event
@@ -76,12 +75,7 @@ class DuplicatesMover:
         self.ax_old, self.ax_new = None, None
         self.plt_cache = [None for _ in range(self.duplicates_len)]
 
-    @staticmethod
-    def delete_window_event():
-        print("Window closed. Program exiting 2...")
-        exit(2)
-
-    def first_display(self):
+        # First display
         files = self.duplicates[self.i]
         # Compare creation dates
         old, new, old_date, new_date = (
@@ -116,6 +110,11 @@ class DuplicatesMover:
         # Tkinter
         fig_canvas = FigureCanvasTkAgg(self.fig, master=self.tk_root)
         fig_canvas.get_tk_widget().pack(side=tk.TOP)
+
+    @staticmethod
+    def delete_window_event():
+        print("Window closed. Program exiting 2...")
+        exit(2)
 
     def display_new_images(self):
         files = self.duplicates[self.i]
@@ -195,7 +194,6 @@ class DuplicatesMover:
     def window_loop(self):
         # Start tkinter loop
         print(f"Detected {self.duplicates_len} duplicated files. ")
-        self.first_display()
         self.tk_root.mainloop()
         # Move images
         self.move_images()
