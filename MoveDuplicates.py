@@ -52,7 +52,6 @@ videos, nb_videos = {}, 0
 
 def list_files(directory=ROOT_DIR):
     global images, videos
-    print("Listing images and videos files...")
     D = os.listdir(directory)
     for fpath in D:
         fpath = f"{directory}/{fpath}"
@@ -219,6 +218,7 @@ if __name__ == "__main__":
             exit(1)
     images = {ext: {} for ext in IMAGE_EXTENSIONS}
     videos = {ext: {} for ext in VIDEO_EXTENSIONS}
+    print("Listing images and videos files...")
     list_files(directory=ROOT_DIR)
     count_files()
     print(nb_images, "potential duplicated images.")

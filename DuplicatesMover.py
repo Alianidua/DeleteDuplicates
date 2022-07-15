@@ -1,7 +1,8 @@
 import os
+from cv2 import VideoCapture
+import numpy as np
 import tkinter as tk
 from PIL import Image
-import cv2
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
@@ -38,6 +39,7 @@ class DuplicatesMover:
         buttons_frame.pack(side=tk.LEFT)
         # Check button
         self.remove = tk.BooleanVar()
+        self.remove.set(True)
         check_button = tk.Checkbutton(
             buttons_frame,
             text="Remove image",
@@ -72,6 +74,7 @@ class DuplicatesMover:
         # Images to display
         self.ax, self.fig = None, None
         self.ax_old, self.ax_new = None, None
+        self.plt_cache = [None for _ in range(self.duplicates_len)]
 
     @staticmethod
     def delete_window_event():
@@ -90,28 +93,26 @@ class DuplicatesMover:
         # Plt figure
         self.fig, self.ax = plt.subplots(1, 2)
         self.fig.set_size_inches(15, 15)
-        plt.suptitle(f"Duplicates {self.i + 1}/{self.duplicates_len}", y=0.9)
+        title = f"Duplicates {self.i + 1}/{self.duplicates_len}"
         if old.split(".")[-1] in self.VIDEOS_EXT:
-            self.ax_old = self.ax[0].imshow(Image.open(old))
-            self.ax[0].set_title(
-                f"Oldest image\n{old[self.root_dir_len:]}\n{old_date}", fontsize=10
-            )
-            self.ax_new = self.ax[1].imshow(Image.open(new))
-            self.ax[1].set_title(
-                f"Newest image\n{new[self.root_dir_len:]}\n{new_date}", fontsize=10
-            )
+            videos = (VideoCapture(old), VideoCapture(new))
+            _, old_image = videos[0].read()
+            _, new_image = videos[1].read()
+            old_title = f"Oldest video\n{old[self.root_dir_len:]}\n{old_date}"
+            new_title = f"Newest video\n{new[self.root_dir_len:]}\n{new_date}"
+            videos[0].release(), videos[1].release()
         else:
-            videos = (cv2.VideoCapture(old), cv2.VideoCapture(new))
-            _, old_frame = videos[0].read()
-            _, new_frame = videos[1].read()
-            self.ax_old = self.ax[0].imshow(old_frame)
-            self.ax[0].set_title(
-                f"Oldest video\n{old[self.root_dir_len:]}\n{old_date}", fontsize=10
-            )
-            self.ax_new = self.ax[1].imshow(new_frame)
-            self.ax[1].set_title(
-                f"Newest video\n{new[self.root_dir_len:]}\n{new_date}", fontsize=10
-            )
+            old_image = Image.open(old)
+            new_image = Image.open(new)
+            old_title = f"Oldest image\n{old[self.root_dir_len:]}\n{old_date}"
+            new_title = f"Newest image\n{new[self.root_dir_len:]}\n{new_date}"
+        self.plt_cache[self.i] = (np.asarray(old_image), np.asarray(new_image), old_title, new_title, title)
+        # Update plot
+        self.ax_old = self.ax[0].imshow(self.plt_cache[self.i][0])
+        self.ax_new = self.ax[1].imshow(self.plt_cache[self.i][1])
+        self.ax[0].set_title(self.plt_cache[self.i][2], fontsize=10)
+        self.ax[1].set_title(self.plt_cache[self.i][3], fontsize=10)
+        plt.suptitle(self.plt_cache[self.i][4], y=0.9)
         # Tkinter
         fig_canvas = FigureCanvasTkAgg(self.fig, master=self.tk_root)
         fig_canvas.get_tk_widget().pack(side=tk.TOP)
@@ -128,30 +129,28 @@ class DuplicatesMover:
         )
         # Update check button value
         self.remove.set(remove)
-        # Update plt data
-        plt.suptitle(f"Duplicates {self.i + 1}/{self.duplicates_len}", y=0.9)
-        if old.split(".")[-1] in self.VIDEOS_EXT:
-            videos = (cv2.VideoCapture(old), cv2.VideoCapture(new))
-            _, old_frame = videos[0].read()
-            _, new_frame = videos[1].read()
-            self.ax_old = self.ax[0].imshow(old_frame)
-            self.ax[0].set_title(
-                f"Oldest video\n{old[self.root_dir_len:]}\n{old_date}", fontsize=10
-            )
-            self.ax_new = self.ax[1].imshow(new_frame)
-            self.ax[1].set_title(
-                f"Newest video\n{new[self.root_dir_len:]}\n{new_date}", fontsize=10
-            )
-            videos[0].release(), videos[1].release()
-        else:
-            self.ax_old.set_data(Image.open(old))
-            self.ax[0].set_title(
-                f"Oldest image\n{old[self.root_dir_len:]}\n{old_date}", fontsize=10
-            )
-            self.ax_new.set_data(Image.open(new))
-            self.ax[1].set_title(
-                f"Newest image\n{new[self.root_dir_len:]}\n{new_date}", fontsize=10
-            )
+        # Load images
+        if not self.plt_cache[self.i]:  # First time showing these duplicates
+            title = f"Duplicates {self.i + 1}/{self.duplicates_len}"
+            if old.split(".")[-1] in self.VIDEOS_EXT:   # Show first frame of videos for first time
+                videos = (VideoCapture(old), VideoCapture(new))
+                _, old_image = videos[0].read()
+                _, new_image = videos[1].read()
+                old_title = f"Oldest video\n{old[self.root_dir_len:]}\n{old_date}"
+                new_title = f"Newest video\n{new[self.root_dir_len:]}\n{new_date}"
+                videos[0].release(), videos[1].release()
+            else:   # Show images for first time
+                old_image = Image.open(old)
+                new_image = Image.open(new)
+                old_title = f"Oldest image\n{old[self.root_dir_len:]}\n{old_date}"
+                new_title = f"Newest image\n{new[self.root_dir_len:]}\n{new_date}"
+            self.plt_cache[self.i] = (np.asarray(old_image), np.asarray(new_image), old_title, new_title, title)
+        # Update plot
+        self.ax_old.set_data(self.plt_cache[self.i][0])
+        self.ax_new.set_data(self.plt_cache[self.i][1])
+        self.ax[0].set_title(self.plt_cache[self.i][2], fontsize=10)
+        self.ax[1].set_title(self.plt_cache[self.i][3], fontsize=10)
+        plt.suptitle(self.plt_cache[self.i][4], y=0.9)
         # Flush
         self.fig.canvas.draw()
         self.fig.canvas.flush_events()
