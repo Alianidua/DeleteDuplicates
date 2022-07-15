@@ -25,14 +25,14 @@ class SettingsManager:
         self.root_dir_entry = tk.Entry(tk_root, width=entries_width)
         self.root_dir_entry.grid(row=0, column=1, padx=20)
         tk.Label(tk_root, text="Directory of your images/videos", width=labels_shape[0], height=labels_shape[1]).grid(row=0, column=0)
-        root_dir_button = tk.Button(tk_root, text="Browse...", width=buttons_width, command=self.replace_root_dir)
+        root_dir_button = tk.Button(tk_root, text="Browse...", width=buttons_width, command=self.replace_root_dir, bg="#DCDCDC")
         root_dir_button.grid(row=0, column=2)
         self.root_dir_entry.insert(0, self.ROOT_DIR)
         # BIN_DIR entry
         self.bin_dir_entry = tk.Entry(tk_root, width=entries_width)
         self.bin_dir_entry.grid(row=1, column=1, padx=20)
         tk.Label(tk_root, text="Target directory for duplicates", width=labels_shape[0], height=labels_shape[1]).grid(row=1, column=0)
-        bin_dir_button = tk.Button(tk_root, text="Browse...", width=buttons_width, command=self.replace_bin_dir)
+        bin_dir_button = tk.Button(tk_root, text="Browse...", width=buttons_width, command=self.replace_bin_dir, bg="#DCDCDC")
         bin_dir_button.grid(row=1, column=2)
         self.bin_dir_entry.insert(0, self.BIN_DIR)
         # IMAGE_EXT entry
@@ -50,8 +50,12 @@ class SettingsManager:
         self.percentage_entry.grid(row=4, column=1)
         tk.Label(tk_root, text="Progression display frequency (in terminal)", width=labels_shape[0], height=labels_shape[1]).grid(row=4, column=0)
         self.percentage_entry.insert(0, self.PERCENTAGE)
-        # Start loop
-        self.settings_window()
+        # Confirm button
+        confirm_button = tk.Button(tk_root, width=buttons_width, text="Confirm", command=self.confirm_event, bg="#A9A9A9")
+        confirm_button.grid(row=4, column=2)
+        # Start tkinter loop
+        print(f"Opening tkinter parameters window. ")
+        self.tk_root.mainloop()
 
     def replace_root_dir(self):
         self.root_dir_entry.delete(0, tk.END)
@@ -61,11 +65,26 @@ class SettingsManager:
         self.root_dir_entry.delete(0, tk.END)
         self.root_dir_entry.insert(0, tk.filedialog.askdirectory())
 
-    def settings_window(self):
-        # Start tkinter loop
-        print(f"Opening tkinter parameters window. ")
-        self.tk_root.mainloop()
-        BIN_DIR = ""
+    def confirm_event(self):
+        # Format values
+        ROOT_DIR = self.root_dir_entry.get()
+        print(ROOT_DIR)
+        while ROOT_DIR[-1] == "\\" or ROOT_DIR[-1] == " ":
+            ROOT_DIR = ROOT_DIR[:-1]
+        while ROOT_DIR[0] == " ":
+            ROOT_DIR = ROOT_DIR[1:]
+        BIN_DIR = self.bin_dir_entry.get()
+        while BIN_DIR and (BIN_DIR[-1] == "\\" or BIN_DIR[-1] == " "):
+            BIN_DIR = BIN_DIR[:-1]
+        while BIN_DIR and BIN_DIR[0] == " ":
+            BIN_DIR = BIN_DIR[1:]
+        IMAGE_EXTENSIONS = self.image_ext_entry.get().strip(" ").strip("\n").strip("\t").split(",")
+        VIDEO_EXTENSIONS = self.video_ext_entry.get().strip(" ").strip("\n").strip("\t").split(",")
+        PERCENTAGE = float(self.percentage_entry.get().strip(" ").strip("\n").strip("\t"))
+        print(
+            f"Final settings loaded :\n\tROOT_DIR: {ROOT_DIR}\n\tBIN_DIR: {BIN_DIR}\n\tFORMATS: {IMAGE_EXTENSIONS}\n\tPROGRESSION_FREQUENCY: {PERCENTAGE}\n\tVIDEO_EXTENSIONS: {VIDEO_EXTENSIONS}\n"
+        )
+        # Logs for BIN_DIR
         if BIN_DIR:
             if not os.path.exists(BIN_DIR) or not os.path.isdir(BIN_DIR):
                 print(f"{BIN_DIR} does not exist or is not a directory. Creating BIN_DIR directory...")
@@ -76,12 +95,19 @@ class SettingsManager:
                 )
         else:
             print("No BIN_DIR specified. The duplicates will not be removed.")
+        # Set settings values
+        self.ROOT_DIR = ROOT_DIR
+        self.BIN_DIR = BIN_DIR
+        self.IMAGE_EXTENSIONS = IMAGE_EXTENSIONS
+        self.VIDEO_EXTENSIONS = VIDEO_EXTENSIONS
+        self.PERCENTAGE = PERCENTAGE
+        # Close tkinter window
+        self.tk_root.destroy()
 
     def load_default_settings(self):
         with open("./settings.txt", encoding="utf-8") as settings:
             lines = settings.readlines()
         ROOT_DIR = lines[0].split("=")[1]
-        print(ROOT_DIR[-1])
         while ROOT_DIR[-1] == "\\" or ROOT_DIR[-1] == " " or ROOT_DIR[-1] == "\n":
             ROOT_DIR = ROOT_DIR[:-1]
         while ROOT_DIR[0] == " ":

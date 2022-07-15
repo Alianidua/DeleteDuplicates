@@ -52,14 +52,14 @@ class DuplicatesMover:
         tk_root.bind("<KeyPress-space>", self.check_image_keybind_event)
         # Button previous
         button_prev = tk.Button(
-            buttons_frame, text="Prev", width=6, bg="#A9A9A9", command=self.prev_event
+            buttons_frame, text="Prev", width=6, bg="#DCDCDC", command=self.prev_event
         )
         button_prev.pack(side=tk.LEFT)
         button_prev["font"] = font
         tk_root.bind("<Left>", self.prev_event)
         # Button next
         button_next = tk.Button(
-            buttons_frame, text="Next", width=6, bg="#A9A9A9", command=self.next_event
+            buttons_frame, text="Next", width=6, bg="#DCDCDC", command=self.next_event
         )
         button_next.pack()
         button_next["font"] = font
