@@ -5,3 +5,4 @@ tk
 recordclass
 opsdroid-get-image-size
 opencv-python
+pyinstaller

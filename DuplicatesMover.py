@@ -25,7 +25,9 @@ class DuplicatesMover:
         self.tk_root = tk_root
         tk_root.wm_title("Duplicated images - check the images you want to remove")
         # Handle window closure
-        tk_root.wm_protocol("WM_DELETE_WINDOW", func=DuplicatesMover.delete_window_event)
+        tk_root.wm_protocol(
+            "WM_DELETE_WINDOW", func=DuplicatesMover.delete_window_event
+        )
         # Fonts
         small_font = tk.font.Font(size=15)
         font = tk.font.Font(size=20)
@@ -98,7 +100,13 @@ class DuplicatesMover:
             new_image = Image.open(new)
             old_title = f"Oldest image\n{old[self.root_dir_len:]}\n{old_date}"
             new_title = f"Newest image\n{new[self.root_dir_len:]}\n{new_date}"
-        self.plt_cache[self.i] = (np.asarray(old_image), np.asarray(new_image), old_title, new_title, title)
+        self.plt_cache[self.i] = (
+            np.asarray(old_image),
+            np.asarray(new_image),
+            old_title,
+            new_title,
+            title,
+        )
         # Update plot
         self.ax_old = self.ax[0].imshow(self.plt_cache[self.i][0])
         self.ax_new = self.ax[1].imshow(self.plt_cache[self.i][1])
@@ -129,19 +137,27 @@ class DuplicatesMover:
         # Load images
         if not self.plt_cache[self.i]:  # First time showing these duplicates
             title = f"Duplicates {self.i + 1}/{self.duplicates_len}"
-            if old.split(".")[-1] in self.VIDEOS_EXT:   # Show first frame of videos for first time
+            if (
+                old.split(".")[-1] in self.VIDEOS_EXT
+            ):  # Show first frame of videos for first time
                 videos = (VideoCapture(old), VideoCapture(new))
                 _, old_image = videos[0].read()
                 _, new_image = videos[1].read()
                 old_title = f"Oldest video\n{old[self.root_dir_len:]}\n{old_date}"
                 new_title = f"Newest video\n{new[self.root_dir_len:]}\n{new_date}"
                 videos[0].release(), videos[1].release()
-            else:   # Show images for first time
+            else:  # Show images for first time
                 old_image = Image.open(old)
                 new_image = Image.open(new)
                 old_title = f"Oldest image\n{old[self.root_dir_len:]}\n{old_date}"
                 new_title = f"Newest image\n{new[self.root_dir_len:]}\n{new_date}"
-            self.plt_cache[self.i] = (np.asarray(old_image), np.asarray(new_image), old_title, new_title, title)
+            self.plt_cache[self.i] = (
+                np.asarray(old_image),
+                np.asarray(new_image),
+                old_title,
+                new_title,
+                title,
+            )
         # Update plot
         self.ax_old.set_data(self.plt_cache[self.i][0])
         self.ax_new.set_data(self.plt_cache[self.i][1])

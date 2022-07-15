@@ -105,7 +105,12 @@ def compare_dates(p1, p2):
     if new_date < old_date:
         old, new = p1, p2
         old_date, new_date = new_date, old_date
-    return old, new, dt.datetime.fromtimestamp(old_date), dt.datetime.fromtimestamp(new_date)
+    return (
+        old,
+        new,
+        dt.datetime.fromtimestamp(old_date),
+        dt.datetime.fromtimestamp(new_date),
+    )
 
 
 def iterate_queue(queue, shape, i, percentage):
@@ -182,7 +187,13 @@ if __name__ == "__main__":
         t_start = time.time()
         # Load settings
         settings_manager = SettingsManager()
-        ROOT_DIR, BIN_DIR, IMAGE_EXTENSIONS, VIDEO_EXTENSIONS, PERCENTAGE = settings_manager.get_settings()
+        (
+            ROOT_DIR,
+            BIN_DIR,
+            IMAGE_EXTENSIONS,
+            VIDEO_EXTENSIONS,
+            PERCENTAGE,
+        ) = settings_manager.get_settings()
         # List files
         images = {ext: {} for ext in IMAGE_EXTENSIONS}
         videos = {ext: {} for ext in VIDEO_EXTENSIONS}
@@ -199,11 +210,14 @@ if __name__ == "__main__":
         if not duplicates:
             print("No duplicate found. Exiting 0...")
             exit(0)
-        duplicates_mover = DuplicatesMover(ROOT_DIR, BIN_DIR, VIDEO_EXTENSIONS, duplicates)
+        duplicates_mover = DuplicatesMover(
+            ROOT_DIR, BIN_DIR, VIDEO_EXTENSIONS, duplicates
+        )
         duplicates_mover.window_loop()
     except Exception as e:
         error_traceback = traceback.format_exc()
         print(error_traceback)
-        messagebox.showerror("Something went wrong :( check the logs or message me", error_traceback)
+        messagebox.showerror(
+            "Something went wrong :( check the logs or message me", error_traceback
+        )
         print("Something went wrong :( check the logs or message me")
-

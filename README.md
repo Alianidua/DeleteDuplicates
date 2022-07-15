@@ -28,3 +28,9 @@ The program works in 4 steps:
 
 <ins>Note</ins>: for the moment the program is not able to efficiently detect images duplicated 3 or more times.
 It must be runned multiple times to work properly.
+
+# Build executable
+
+```
+pyinstaller --onefile MoveDuplicates.py
+```
