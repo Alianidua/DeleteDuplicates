@@ -13,7 +13,7 @@ class SettingsManager:
         self.PERCENTAGE = None
         self.load_default_settings()
 
-        # Tkinter
+        # Tkinter root
         tk_root = tk.Tk()
         tk_root.wm_title("Duplicates Remover - Settings")
         tk_root.geometry("1000x200")
@@ -21,6 +21,8 @@ class SettingsManager:
         labels_shape = (40, 2)
         entries_width = 90
         buttons_width = 15
+        # Handle window closure
+        tk_root.wm_protocol("WM_DELETE_WINDOW", func=SettingsManager.delete_window_event)
         # ROOT_DIR entry
         self.root_dir_entry = tk.Entry(tk_root, width=entries_width)
         self.root_dir_entry.grid(row=0, column=1, padx=20)
@@ -56,6 +58,11 @@ class SettingsManager:
         # Start tkinter loop
         print(f"Opening tkinter parameters window. ")
         self.tk_root.mainloop()
+
+    @staticmethod
+    def delete_window_event():
+        print("Settings window closed. Program exiting 2...")
+        exit(2)
 
     def replace_root_dir(self):
         self.root_dir_entry.delete(0, tk.END)

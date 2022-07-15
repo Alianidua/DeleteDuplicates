@@ -25,9 +25,7 @@ class DuplicatesMover:
         self.tk_root = tk_root
         tk_root.wm_title("Duplicated images - check the images you want to remove")
         # Handle window closure
-        tk_root.wm_protocol(
-            "WM_DELETE_WINDOW", func=DuplicatesMover.delete_window_event
-        )
+        tk_root.wm_protocol("WM_DELETE_WINDOW", func=DuplicatesMover.delete_window_event)
         # Fonts
         small_font = tk.font.Font(size=15)
         font = tk.font.Font(size=20)

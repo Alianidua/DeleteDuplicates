@@ -154,7 +154,7 @@ def iterate_paths():
         for shape in images[ext]:
             queue = images[ext][shape]
             i, percentage = iterate_queue(queue, shape, i, percentage)
-    print("100 %. Done.\n")
+    print("100 %. Done.")
     print("Iterating over videos...")
     for ext in videos:
         for size in videos[ext]:
