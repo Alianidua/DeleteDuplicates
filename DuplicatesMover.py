@@ -44,6 +44,7 @@ class DuplicatesMover:
         )
         check_button.pack(side=tk.TOP)
         check_button["font"] = small_font
+        tk_root.bind("<KeyPress-space>", self.check_image_keybind_event)
         # Button previous
         button_prev = tk.Button(buttons_frame, text="Prev", width=6, bg="#A9A9A9", command=self.prev_event)
         button_prev.pack(side=tk.LEFT)
@@ -88,6 +89,10 @@ class DuplicatesMover:
         self.fig_canvas.get_tk_widget().pack(side=tk.TOP)
 
     def check_image_event(self):
+        self.duplicates[self.i].remove = self.remove.get()
+
+    def check_image_keybind_event(self, event):
+        self.remove.set(not self.remove.get())
         self.duplicates[self.i].remove = self.remove.get()
 
     def prev_event(self, *args):
