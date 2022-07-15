@@ -1,11 +1,14 @@
 import os
 import time
+import traceback
 import datetime as dt
 from PIL import Image
 import get_image_size
+from tkinter import messagebox
 from recordclass import recordclass
 from SettingsManager import SettingsManager
 from DuplicatesMover import DuplicatesMover
+
 
 # Load settings
 ROOT_DIR = None  # The directory where your images are stored
@@ -175,25 +178,32 @@ def iterate_paths():
 
 if __name__ == "__main__":
 
-    t_start = time.time()
-    # Load settings
-    settings_manager = SettingsManager()
-    ROOT_DIR, BIN_DIR, IMAGE_EXTENSIONS, VIDEO_EXTENSIONS, PERCENTAGE = settings_manager.get_settings()
-    # List files
-    images = {ext: {} for ext in IMAGE_EXTENSIONS}
-    videos = {ext: {} for ext in VIDEO_EXTENSIONS}
-    print("Listing images and videos files...")
-    list_files(directory=ROOT_DIR)
-    # Count files
-    count_files()
-    print(nb_images, "potential duplicated images.")
-    print(nb_videos, "potential duplicated videos.")
-    # Start duplicates detection
-    iterate_paths()
-    print(f"Computing time : {round(time.time() - t_start, 2)} seconds.")
-    # Show and move images
-    if not duplicates:
-        print("No duplicate found. Exiting 0...")
-        exit(0)
-    duplicates_mover = DuplicatesMover(ROOT_DIR, BIN_DIR, VIDEO_EXTENSIONS, duplicates)
-    duplicates_mover.window_loop()
+    try:
+        t_start = time.time()
+        # Load settings
+        settings_manager = SettingsManager()
+        ROOT_DIR, BIN_DIR, IMAGE_EXTENSIONS, VIDEO_EXTENSIONS, PERCENTAGE = settings_manager.get_settings()
+        # List files
+        images = {ext: {} for ext in IMAGE_EXTENSIONS}
+        videos = {ext: {} for ext in VIDEO_EXTENSIONS}
+        print("Listing images and videos files...")
+        list_files(directory=ROOT_DIR)
+        # Count files
+        count_files()
+        print(nb_images, "potential duplicated images.")
+        print(nb_videos, "potential duplicated videos.")
+        # Start duplicates detection
+        iterate_paths()
+        print(f"Computing time : {round(time.time() - t_start, 2)} seconds.")
+        # Show and move images
+        if not duplicates:
+            print("No duplicate found. Exiting 0...")
+            exit(0)
+        duplicates_mover = DuplicatesMover(ROOT_DIR, BIN_DIR, VIDEO_EXTENSIONS, duplicates)
+        duplicates_mover.window_loop()
+    except Exception as e:
+        error_traceback = traceback.format_exc()
+        print(error_traceback)
+        messagebox.showerror("Something went wrong :( check the logs or message me", error_traceback)
+        print("Something went wrong :( check the logs or message me")
+
