@@ -78,7 +78,7 @@ def count_files():
                 one_or_less.append(size)
             else:
                 print(f"\t    {size}:     \t{count}")
-                nb_images += count
+                nb_videos += count
         for size in one_or_less:
             videos[ext].pop(size)
     print()

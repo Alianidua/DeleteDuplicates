@@ -16,7 +16,7 @@ If no path is specified, the images are not moved.
 
 To run the program, type :
 ```
-python main.py
+python MoveDuplicates.py
 ```
 
 The program works in 4 steps:
