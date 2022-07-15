@@ -60,12 +60,29 @@ class DuplicatesMover:
         button_confirm.pack(side=tk.RIGHT)
         button_confirm["font"] = font
         # Images to display
-        self.fig_canvas = None
+        self.ax, self.fig = None, None
+        self.ax_old, self.ax_new = None, None
 
     @staticmethod
     def delete_window_event():
         print("Window closed. Program exiting 2...")
         exit(2)
+
+    def first_display(self):
+        files = self.duplicates[self.i]
+        # Compare creation dates
+        old, new, old_date, new_date = files.old, files.new, files.old_date, files.new_date
+        # Plt figure
+        self.fig, self.ax = plt.subplots(1, 2)
+        self.fig.set_size_inches(15, 15)
+        plt.suptitle(f"Image {self.i + 1}/{self.duplicates_len}", y=0.9)
+        self.ax_old = self.ax[0].imshow(Image.open(old))
+        self.ax[0].set_title(f"Oldest image\n{old[self.root_dir_len:]}\n{old_date}", fontsize=10)
+        self.ax_new = self.ax[1].imshow(Image.open(new))
+        self.ax[1].set_title(f"Newest image\n{new[self.root_dir_len:]}\n{new_date}", fontsize=10)
+        # Tkinter
+        fig_canvas = FigureCanvasTkAgg(self.fig, master=self.tk_root)
+        fig_canvas.get_tk_widget().pack(side=tk.TOP)
 
     def display_new_images(self):
         files = self.duplicates[self.i]
@@ -73,20 +90,15 @@ class DuplicatesMover:
         old, new, old_date, new_date, remove = files.old, files.new, files.old_date, files.new_date, files.remove
         # Update check button value
         self.remove.set(remove)
-        # Plt figure
-        fig, ax = plt.subplots(1, 2)
-        fig.set_size_inches(15, 15)
+        # Update plt data
+        self.ax_old.set_data(Image.open(old))
         plt.suptitle(f"Image {self.i + 1}/{self.duplicates_len}", y=0.9)
-        ax[0].imshow(Image.open(old))
-        ax[0].set_title(f"Oldest image\n{old[self.root_dir_len:]}\n{old_date}", fontsize=10)
-        ax[1].imshow(Image.open(new))
-        ax[1].set_title(f"Newest image\n{new[self.root_dir_len:]}\n{new_date}", fontsize=10)
-        # Tkinter
-        if self.fig_canvas:
-            self.fig_canvas.get_tk_widget().destroy()
-            plt.close('all')
-        self.fig_canvas = FigureCanvasTkAgg(fig, master=self.tk_root)
-        self.fig_canvas.get_tk_widget().pack(side=tk.TOP)
+        self.ax[0].set_title(f"Oldest image\n{old[self.root_dir_len:]}\n{old_date}", fontsize=10)
+        self.ax_new.set_data(Image.open(new))
+        self.ax[1].set_title(f"Newest image\n{new[self.root_dir_len:]}\n{new_date}", fontsize=10)
+        # Flush
+        self.fig.canvas.draw()
+        self.fig.canvas.flush_events()
 
     def check_image_event(self):
         self.duplicates[self.i].remove = self.remove.get()
@@ -125,7 +137,7 @@ class DuplicatesMover:
     def window_loop(self):
         # Start tkinter loop
         print(f"Detected {self.duplicates_len} duplicated files. ")
-        self.display_new_images()
+        self.first_display()
         self.tk_root.mainloop()
         # Move images
         self.move_images()

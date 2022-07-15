@@ -87,7 +87,7 @@ duplicates = list()
 def iterate_queue(queue, shape, i, percentage):
 
     # Compute pixels positions to use for comparison
-    draft_shape = (shape[0] // 50, shape[0] // 50)
+    draft_shape = (shape[0] // 16, shape[0] // 16)
     locations = [
         (draft_shape[0] // i, draft_shape[0] // j) for i in [1.25, 2, 2.75] for j in [1.25, 2, 2.75]
     ]
