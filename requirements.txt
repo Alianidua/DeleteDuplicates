@@ -4,3 +4,4 @@ opsdroid-get-image-size
 tk
 recordclass
 opsdroid-get-image-size
+opencv-python
