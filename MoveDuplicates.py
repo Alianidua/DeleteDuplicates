@@ -30,7 +30,7 @@ def load_settings():
         BIN_DIR = BIN_DIR[1:]
     IMAGE_EXTENSIONS = lines[2].split("=")[1].strip(" ").strip("\n").strip("\t").split(",")
     PERCENTAGE = float(lines[3].split("=")[1].strip(" ").strip("\n").strip("\t").replace(" ", ""))
-    print(f"Settings loaded :\n\tROOT_DIR: {ROOT_DIR}\n\tBIN_DIR: {BIN_DIR}\n\tFORMATS: {IMAGE_EXTENSIONS}\n\tPROGRESSION_FREQUENCY: {PERCENTAGE}")
+    print(f"Settings loaded :\n\tROOT_DIR: {ROOT_DIR}\n\tBIN_DIR: {BIN_DIR}\n\tFORMATS: {IMAGE_EXTENSIONS}\n\tPROGRESSION_FREQUENCY: {PERCENTAGE}\n")
 
 
 # Return a queue with all images in root_dir
@@ -52,7 +52,7 @@ def list_images(directory=ROOT_DIR):
 # Count number of images per extension and shape
 def count_images():
     global nb_images
-    print("  EXT       SHAPE       NB_IMAGES")
+    print("  EXT          SHAPE         NB_IMAGES")
     for ext in IMAGE_EXTENSIONS:
         if not images[ext]:
             continue
@@ -69,6 +69,7 @@ def count_images():
                 nb_images += count
         for shape in one_or_less:
             images[ext].pop(shape)
+    print()
 
 
 # Compare 2 images
