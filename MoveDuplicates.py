@@ -1,4 +1,5 @@
 import os
+import sys
 import time
 import traceback
 import datetime as dt
@@ -209,7 +210,7 @@ if __name__ == "__main__":
         # Show and move images
         if not duplicates:
             print("No duplicate found. Exiting 0...")
-            exit(0)
+            sys.exit(0)
         duplicates_mover = DuplicatesMover(
             ROOT_DIR, BIN_DIR, VIDEO_EXTENSIONS, duplicates
         )
@@ -221,3 +222,4 @@ if __name__ == "__main__":
             "Something went wrong :( check the logs or message me", error_traceback
         )
         print("Something went wrong :( check the logs or message me")
+        sys.exit(1)

@@ -1,11 +1,10 @@
 # THIS README IS NOT UP-TO-DATE
 
-
 The aim of this program is to delete all the duplicated images in a directory and its subdirectories.
 
 # Requirements
 
-This program was coded using Python3.10.  
+This program was coded using Python3.7.9.  
 Required python modules are specified in `requirements.txt`.
 
 # Usage
@@ -32,5 +31,11 @@ It must be runned multiple times to work properly.
 # Build executable
 
 ```
-pyinstaller --onefile MoveDuplicates.py
+pyinstaller --onefile MoveDuplicates.py && cp settings.txt dist/settings.txt
+```
+
+Run executable without closing child :
+
+```
+cmd.exe /k cmd /c MoveDuplicates.exe
 ```

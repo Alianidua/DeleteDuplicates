@@ -3,4 +3,6 @@ test
 .idea
 **/__pycache__/
 test.py
-build
+build/
+MoveDuplicates.spec
+dist/

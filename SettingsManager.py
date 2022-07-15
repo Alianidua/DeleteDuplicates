@@ -1,15 +1,16 @@
 import os
+import sys
 import tkinter as tk
 
 
 class SettingsManager:
     def __init__(self):
         # Settings
-        self.ROOT_DIR = None
-        self.BIN_DIR = None
-        self.IMAGE_EXTENSIONS = None
-        self.VIDEO_EXTENSIONS = None
-        self.PERCENTAGE = None
+        self.ROOT_DIR = ""
+        self.BIN_DIR = ""
+        self.IMAGE_EXTENSIONS = ""
+        self.VIDEO_EXTENSIONS = ""
+        self.PERCENTAGE = 0.1
         self.load_default_settings()
 
         # Tkinter root
@@ -106,7 +107,7 @@ class SettingsManager:
     @staticmethod
     def delete_window_event():
         print("Settings window closed. Program exiting 2...")
-        exit(2)
+        sys.exit(2)
 
     def replace_root_dir(self):
         self.root_dir_entry.delete(0, tk.END)
@@ -164,6 +165,9 @@ class SettingsManager:
         self.tk_root.destroy()
 
     def load_default_settings(self):
+        if not os.path.exists("./settings.txt"):
+            print("No default settings.")
+            return
         with open("./settings.txt", encoding="utf-8") as settings:
             lines = settings.readlines()
         ROOT_DIR = lines[0].split("=")[1]

@@ -1,4 +1,5 @@
 import os
+import sys
 from cv2 import VideoCapture
 import numpy as np
 import tkinter as tk
@@ -120,7 +121,7 @@ class DuplicatesMover:
     @staticmethod
     def delete_window_event():
         print("Window closed. Program exiting 2...")
-        exit(2)
+        sys.exit(2)
 
     def display_new_images(self):
         files = self.duplicates[self.i]

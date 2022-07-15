@@ -1,8 +1,7 @@
-Matplotlib
-Pillow
-opsdroid-get-image-size
-tk
-recordclass
-opsdroid-get-image-size
-opencv-python
-pyinstaller
+opencv-python==4.5.3.56
+Matplotlib==3.5.2
+Pillow==9.2.0
+opsdroid-get-image-size==0.2.2
+tk==0.1.0
+recordclass==0.17.2
+pyinstaller==5.2
