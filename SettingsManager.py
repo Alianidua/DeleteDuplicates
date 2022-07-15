@@ -70,7 +70,7 @@ class SettingsManager:
             width=labels_shape[0],
             height=labels_shape[1],
         ).grid(row=2, column=0)
-        self.image_ext_entry.insert(0, self.IMAGE_EXTENSIONS)
+        self.image_ext_entry.insert(0, ",".join(self.IMAGE_EXTENSIONS))
         # VIDEO_EXT entry
         self.video_ext_entry = tk.Entry(tk_root, width=entries_width)
         self.video_ext_entry.grid(row=3, column=1)
@@ -80,7 +80,7 @@ class SettingsManager:
             width=labels_shape[0],
             height=labels_shape[1],
         ).grid(row=3, column=0)
-        self.video_ext_entry.insert(0, self.VIDEO_EXTENSIONS)
+        self.video_ext_entry.insert(0, ",".join(self.VIDEO_EXTENSIONS))
         # PERCENTAGE entry
         self.percentage_entry = tk.Entry(tk_root, width=entries_width)
         self.percentage_entry.grid(row=4, column=1)
@@ -110,20 +110,24 @@ class SettingsManager:
         sys.exit(2)
 
     def replace_root_dir(self):
-        self.root_dir_entry.delete(0, tk.END)
-        self.root_dir_entry.insert(0, tk.filedialog.askdirectory())
+        new_dir = tk.filedialog.askdirectory()
+        if new_dir:
+            self.root_dir_entry.delete(0, tk.END)
+            self.root_dir_entry.insert(0, new_dir)
 
     def replace_bin_dir(self):
-        self.root_dir_entry.delete(0, tk.END)
-        self.root_dir_entry.insert(0, tk.filedialog.askdirectory())
+        new_dir = tk.filedialog.askdirectory()
+        if new_dir:
+            self.root_dir_entry.delete(0, tk.END)
+            self.root_dir_entry.insert(0, new_dir)
 
     def confirm_event(self):
         # Format values
         ROOT_DIR = self.root_dir_entry.get()
         print(ROOT_DIR)
-        while ROOT_DIR[-1] == "\\" or ROOT_DIR[-1] == " ":
+        while ROOT_DIR and (ROOT_DIR[-1] == "\\" or ROOT_DIR[-1] == " "):
             ROOT_DIR = ROOT_DIR[:-1]
-        while ROOT_DIR[0] == " ":
+        while ROOT_DIR and ROOT_DIR[0] == " ":
             ROOT_DIR = ROOT_DIR[1:]
         BIN_DIR = self.bin_dir_entry.get()
         while BIN_DIR and (BIN_DIR[-1] == "\\" or BIN_DIR[-1] == " "):
@@ -136,12 +140,11 @@ class SettingsManager:
         VIDEO_EXTENSIONS = (
             self.video_ext_entry.get().strip(" ").strip("\n").strip("\t").split(",")
         )
-        PERCENTAGE = float(
-            self.percentage_entry.get().strip(" ").strip("\n").strip("\t")
-        )
-        print(
-            f"Final settings loaded :\n\tROOT_DIR: {ROOT_DIR}\n\tBIN_DIR: {BIN_DIR}\n\tFORMATS: {IMAGE_EXTENSIONS}\n\tPROGRESSION_FREQUENCY: {PERCENTAGE}\n\tVIDEO_EXTENSIONS: {VIDEO_EXTENSIONS}\n"
-        )
+        PERCENTAGE = self.percentage_entry.get().strip(" ").strip("\n").strip("\t")
+        if not PERCENTAGE:
+            PERCENTAGE = 0.01
+        else:
+            PERCENTAGE = float(PERCENTAGE)
         # Logs for BIN_DIR
         if BIN_DIR:
             if not os.path.exists(BIN_DIR) or not os.path.isdir(BIN_DIR):
@@ -161,6 +164,9 @@ class SettingsManager:
         self.IMAGE_EXTENSIONS = IMAGE_EXTENSIONS
         self.VIDEO_EXTENSIONS = VIDEO_EXTENSIONS
         self.PERCENTAGE = PERCENTAGE
+        print(
+            f"Final settings loaded :\n\tROOT_DIR: {ROOT_DIR}\n\tBIN_DIR: {BIN_DIR}\n\tFORMATS: {IMAGE_EXTENSIONS}\n\tPROGRESSION_FREQUENCY: {PERCENTAGE}\n\tVIDEO_EXTENSIONS: {VIDEO_EXTENSIONS}\n"
+        )
         # Close tkinter window
         self.tk_root.destroy()
 
@@ -171,9 +177,11 @@ class SettingsManager:
         with open("./settings.txt", encoding="utf-8") as settings:
             lines = settings.readlines()
         ROOT_DIR = lines[0].split("=")[1]
-        while ROOT_DIR[-1] == "\\" or ROOT_DIR[-1] == " " or ROOT_DIR[-1] == "\n":
+        while ROOT_DIR and (
+            ROOT_DIR[-1] == "\\" or ROOT_DIR[-1] == " " or ROOT_DIR[-1] == "\n"
+        ):
             ROOT_DIR = ROOT_DIR[:-1]
-        while ROOT_DIR[0] == " ":
+        while ROOT_DIR and ROOT_DIR[0] == " ":
             ROOT_DIR = ROOT_DIR[1:]
         BIN_DIR = lines[1].split("=")[1]
         while BIN_DIR and (
@@ -188,7 +196,11 @@ class SettingsManager:
         VIDEO_EXTENSIONS = (
             lines[3].split("=")[1].strip(" ").strip("\n").strip("\t").split(",")
         )
-        PERCENTAGE = float(lines[4].split("=")[1].strip(" ").strip("\n").strip("\t"))
+        PERCENTAGE = lines[4].split("=")[1].strip(" ").strip("\n").strip("\t")
+        if not PERCENTAGE:
+            PERCENTAGE = 0.01
+        else:
+            PERCENTAGE = float(PERCENTAGE)
         print(
             f"Default settings loaded :\n\tROOT_DIR: {ROOT_DIR}\n\tBIN_DIR: {BIN_DIR}\n\tFORMATS: {IMAGE_EXTENSIONS}\n\tPROGRESSION_FREQUENCY: {PERCENTAGE}\n\tVIDEO_EXTENSIONS: {VIDEO_EXTENSIONS}\n"
         )
