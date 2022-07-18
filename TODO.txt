@@ -1,0 +1,7 @@
+- Revenir à l'écran de paramètres après
+- Pouvoir sélectionner plusieurs dossiers différents à traiter communément ou séquentiellemnt
+- Bug au mment de bouger les images
+
+Fixed:
+- Bin dir folder selection was not working
+- Logs print : VIDEOS instead of IMAGES

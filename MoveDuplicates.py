@@ -64,7 +64,7 @@ def count_files():
                 nb_images += count
         for shape in one_or_less:
             images[ext].pop(shape)
-    print("\n  EXT          SIZE          NB_IMAGES")
+    print("\n  EXT          SIZE          NB_VIDEOS")
     for ext in VIDEO_EXTENSIONS:
         if not videos[ext]:
             continue

@@ -118,8 +118,8 @@ class SettingsManager:
     def replace_bin_dir(self):
         new_dir = tk.filedialog.askdirectory()
         if new_dir:
-            self.root_dir_entry.delete(0, tk.END)
-            self.root_dir_entry.insert(0, new_dir)
+            self.bin_dir_entry.delete(0, tk.END)
+            self.bin_dir_entry.insert(0, new_dir)
 
     def confirm_event(self):
         # Format values
