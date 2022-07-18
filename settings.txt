@@ -1,5 +1,5 @@
-ROOT_DIRECTORY=C:\Users\USER\Pictures\IMAGES
-BIN_DIRECTORY=C:\Users\USER\Desktop\duplicates
+ROOT_DIRECTORY=C:\Users\victi\Desktop\Allemagne
+BIN_DIRECTORY=C:\Users\victi\Desktop\duplicates
 IMAGE_FORMATS=jpg,jpeg,JPG,JPEG,png,PNG
 VIDEO_FORMATS=mp4
 PROGRESSION_FREQUENCY=0.01
