@@ -88,14 +88,18 @@ def count_files():
     logs(total_images, "potential duplicated images.")
     logs(total_videos, "potential duplicated videos.\n")
 
+
 # Load image
 def load_image_pixels(im_path, draft_shape, locations, queue_cache, im_index):
     if not queue_cache[im_index]:
         # Load image for first time
         im = Image.open(im_path)
         im.draft("RGB", draft_shape)
-        queue_cache[im_index] = tuple(im.getpixel(coordinates) for coordinates in locations)
+        queue_cache[im_index] = tuple(
+            im.getpixel(coordinates) for coordinates in locations
+        )
     return queue_cache[im_index]
+
 
 # Main loop; iterate on every images
 DuplicatesInfo = recordclass(
@@ -132,11 +136,15 @@ def iterate_queue(queue, queue_cache, ext, shape, i, percentage):
     while queue:
         # Compute new image values
         im1_path = queue.pop()
-        im1_pixels = load_image_pixels(im1_path, draft_shape, locations, queue_cache, im1_index)
+        im1_pixels = load_image_pixels(
+            im1_path, draft_shape, locations, queue_cache, im1_index
+        )
         # Compare with other images
         for im2_index in range(im1_index):
             im2_path = queue[im2_index]
-            if im1_pixels == load_image_pixels(im2_path, draft_shape, locations, queue_cache, im2_index):
+            if im1_pixels == load_image_pixels(
+                im2_path, draft_shape, locations, queue_cache, im2_index
+            ):
                 old, new, old_date, new_date = compare_dates(im1_path, im2_path)
                 duplicates.append(
                     DuplicatesInfo(
