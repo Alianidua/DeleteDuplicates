@@ -4,6 +4,8 @@ import time
 import traceback
 import datetime as dt
 from PIL import Image
+
+Image.MAX_IMAGE_PIXELS = None
 import get_image_size
 from Logs import logs
 from tkinter import messagebox
