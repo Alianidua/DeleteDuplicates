@@ -1,4 +1,4 @@
-ROOT_DIRECTORY=C:\Users\victi\Desktop\Allemagne
+ROOT_DIRECTORY=C:\Users\victi\Desktop\Gate\Trié\Prépa F1 2017-2019
 BIN_DIRECTORY=C:\Users\victi\Desktop\duplicates
 IMAGE_FORMATS=jpg,jpeg,JPG,JPEG,png,PNG
 VIDEO_FORMATS=mp4

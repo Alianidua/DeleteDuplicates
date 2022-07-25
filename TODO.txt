@@ -1,10 +1,7 @@
-- Revenir à l'écran de paramètres après
 - Pouvoir sélectionner plusieurs dossiers différents à traiter communément ou séquentiellemnt
-- Bug au mment de bouger les images
 - Documentation
 - Bouton pour set as default
 
 Fixed:
-- Bin dir folder selection was not working
-- Logs print : VIDEOS instead of IMAGES
-- Back to settings window when done
+- Optimization : lookup table to avoid loading multiple times the same image
+- Added logs module

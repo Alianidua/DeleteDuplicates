@@ -5,6 +5,7 @@ import traceback
 import datetime as dt
 from PIL import Image
 import get_image_size
+from Logs import logs
 from tkinter import messagebox
 from recordclass import recordclass
 from SettingsManager import SettingsManager
@@ -20,8 +21,8 @@ PERCENTAGE = 0.05  # How frequently the program should show its progression
 
 
 # Return a queue with all images in root_dir
-images, nb_images = {}, 0
-videos, nb_videos = {}, 0
+images, nb_images, total_images = {}, {}, 0
+videos, nb_videos, total_videos = {}, {}, 0
 
 
 def list_files(directory=ROOT_DIR):
@@ -46,12 +47,12 @@ def list_files(directory=ROOT_DIR):
 
 # Count number of images per extension and shape
 def count_files():
-    global nb_images, nb_videos
-    print("  EXT          SHAPE         NB_IMAGES")
+    global nb_images, nb_videos, total_images, total_videos
+    logs("  EXT          SHAPE         NB_IMAGES")
     for ext in IMAGE_EXTENSIONS:
         if not images[ext]:
             continue
-        print(f"[ {ext} ]")
+        logs(f"[ {ext} ]")
         one_or_less = []
         for shape in images[ext]:
             if not images[ext][shape]:
@@ -60,15 +61,16 @@ def count_files():
             if count <= 1:
                 one_or_less.append(shape)
             else:
-                print(f"\t    {shape}:     \t{count}")
-                nb_images += count
+                logs(f"\t    {shape}:     \t{count}")
+                nb_images[ext][shape] = count
+                total_images += count
         for shape in one_or_less:
             images[ext].pop(shape)
-    print("\n  EXT          SIZE          NB_VIDEOS")
+    logs("\n  EXT          SIZE          NB_VIDEOS")
     for ext in VIDEO_EXTENSIONS:
         if not videos[ext]:
             continue
-        print(f"[ {ext} ]")
+        logs(f"[ {ext} ]")
         one_or_less = []
         for size in videos[ext]:
             if not videos[ext][size]:
@@ -77,20 +79,23 @@ def count_files():
             if count <= 1:
                 one_or_less.append(size)
             else:
-                print(f"\t    {size}:     \t{count}")
-                nb_videos += count
+                logs(f"\t    {size}:     \t{count}")
+                nb_videos[ext][size] = count
+                total_videos += count
         for size in one_or_less:
             videos[ext].pop(size)
-    print()
+    logs()
+    logs(total_images, "potential duplicated images.")
+    logs(total_videos, "potential duplicated videos.\n")
 
-
-# Compare 2 images
-def compare_images(im1_pixels, im2_path, draft_shape, locations):
-    im2 = Image.open(im2_path)
-    im2.draft("RGB", draft_shape)
-    im2_pixels = tuple(im2.getpixel(coordinates) for coordinates in locations)
-    return im1_pixels == im2_pixels
-
+# Load image
+def load_image_pixels(im_path, draft_shape, locations, queue_cache, im_index):
+    if not queue_cache[im_index]:
+        # Load image for first time
+        im = Image.open(im_path)
+        im.draft("RGB", draft_shape)
+        queue_cache[im_index] = tuple(im.getpixel(coordinates) for coordinates in locations)
+    return queue_cache[im_index]
 
 # Main loop; iterate on every images
 DuplicatesInfo = recordclass(
@@ -114,29 +119,24 @@ def compare_dates(p1, p2):
     )
 
 
-def iterate_queue(queue, shape, i, percentage):
+def iterate_queue(queue, queue_cache, ext, shape, i, percentage):
     # Compute pixels positions to use for comparison
     draft_shape = (shape[0] // 16, shape[0] // 16)
     locations = [
         (draft_shape[0] // i, draft_shape[0] // j)
-        for i in [1.25, 2, 2.75]
-        for j in [1.25, 2, 2.75]
+        for i in [1, 1.25, 2, 2.75, 3]
+        for j in [1, 1.25, 2, 2.75, 3]
     ]
 
+    im1_index = nb_images[ext][shape] - 1
     while queue:
-        # Iterate
-        i += 1
-        if i / nb_images > percentage:
-            print(round(100 * percentage), "%")
-            percentage += PERCENTAGE
         # Compute new image values
         im1_path = queue.pop()
-        image = Image.open(im1_path)
-        image.draft("RGB", draft_shape)
-        im1_pixels = tuple(image.getpixel(coordinates) for coordinates in locations)
+        im1_pixels = load_image_pixels(im1_path, draft_shape, locations, queue_cache, im1_index)
         # Compare with other images
-        for im2_path in queue:
-            if compare_images(im1_pixels, im2_path, draft_shape, locations):
+        for im2_index in range(im1_index):
+            im2_path = queue[im2_index]
+            if im1_pixels == load_image_pixels(im2_path, draft_shape, locations, queue_cache, im2_index):
                 old, new, old_date, new_date = compare_dates(im1_path, im2_path)
                 duplicates.append(
                     DuplicatesInfo(
@@ -147,24 +147,31 @@ def iterate_queue(queue, shape, i, percentage):
                         remove=True,
                     )
                 )
-                print("Duplicates :", im1_path, im2_path)
+                logs("Duplicates :", im1_path, im2_path)
                 break
+        # Iterate
+        im1_index -= 1
+        i += 1
+        if i / total_images > percentage:
+            logs(round(100 * percentage), "%")
+            percentage += PERCENTAGE
     return i, percentage
 
 
 def iterate_paths():
-    print("Iterating over all images...")
+    logs("Iterating over all images...")
     i = 0
     percentage = 0
     for ext in images:
         for shape in images[ext]:
             queue = images[ext][shape]
-            i, percentage = iterate_queue(queue, shape, i, percentage)
-    print("100 %. Done.")
-    print("Iterating over videos...")
+            queue_cache = [None for _ in queue]
+            i, percentage = iterate_queue(queue, queue_cache, ext, shape, i, percentage)
+    logs("100 %. Done.")
+    logs("Iterating over videos...")
     for ext in videos:
         for size in videos[ext]:
-            n = len(videos[ext][size])
+            n = nb_videos[ext][size]
             for i in range(n - 1):
                 v1 = videos[ext][size][i]
                 for j in range(i + 1, n):
@@ -179,7 +186,7 @@ def iterate_paths():
                             remove=True,
                         )
                     )
-    print("100 %. Done.")
+    logs("100 %. Done.")
 
 
 if __name__ == "__main__":
@@ -198,16 +205,16 @@ if __name__ == "__main__":
             ) = settings_manager.get_settings()
             # List files
             images = {ext: {} for ext in IMAGE_EXTENSIONS}
+            nb_images = {ext: {} for ext in IMAGE_EXTENSIONS}
             videos = {ext: {} for ext in VIDEO_EXTENSIONS}
-            print("Listing images and videos files...")
+            nb_videos = {ext: {} for ext in VIDEO_EXTENSIONS}
+            logs("Listing images and videos files...")
             list_files(directory=ROOT_DIR)
             # Count files
             count_files()
-            print(nb_images, "potential duplicated images.")
-            print(nb_videos, "potential duplicated videos.")
             # Start duplicates detection
             iterate_paths()
-            print(f"Computing time : {round(time.time() - t_start, 2)} seconds.")
+            logs(f"Computing time : {round(time.time() - t_start, 2)} seconds.")
             # Show and move images
             if duplicates:
                 duplicates_mover = DuplicatesMover(
@@ -215,14 +222,14 @@ if __name__ == "__main__":
                 )
                 duplicates_mover.window_loop()
             else:
-                print("No duplicate found. Back to settings.")
+                logs("No duplicate found. Back to settings.")
     except Exception as e:
         error_traceback = traceback.format_exc()
-        print(error_traceback)
+        logs(error_traceback)
         messagebox.showerror(
             "Something went wrong :( check the logs or message me", error_traceback
         )
-        print("Something went wrong :( check the logs or message me")
-        print("Press enter to close terminal.")
+        logs("Something went wrong :( check the logs or message me")
+        logs("Press enter to close terminal.")
         input()
         sys.exit(1)

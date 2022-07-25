@@ -1,9 +1,10 @@
 import os
 import sys
-from cv2 import VideoCapture
 import numpy as np
 import tkinter as tk
 from PIL import Image
+from Logs import logs
+from cv2 import VideoCapture
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
@@ -120,7 +121,7 @@ class DuplicatesMover:
 
     @staticmethod
     def delete_window_event():
-        print("Window closed. Program exiting 2...")
+        logs("Window closed. Program exiting 2...")
         sys.exit(2)
 
     def display_new_images(self):
@@ -194,9 +195,9 @@ class DuplicatesMover:
 
     def move_images(self):
         to_remove = tuple(files.new for files in self.duplicates if files.remove)
-        print(f"Registered {len(to_remove)} files to move.")
+        logs(f"Registered {len(to_remove)} files to move.")
         if self.BIN_DIR:
-            print(f"Moving them to bin folder: {self.BIN_DIR}")
+            logs(f"Moving them to bin folder: {self.BIN_DIR}")
             for duplicate_path in to_remove:
                 if os.path.exists(duplicate_path):
                     os.rename(
@@ -204,11 +205,11 @@ class DuplicatesMover:
                         f"{self.BIN_DIR}/{duplicate_path.split('/')[-1]}",
                     )
         else:
-            print("No BIN_DIR defined. Duplicates will not be moved.")
+            logs("No BIN_DIR defined. Duplicates will not be moved.")
 
     def window_loop(self):
         # Start tkinter loop
-        print(f"Detected {self.duplicates_len} duplicated files. ")
+        logs(f"Detected {self.duplicates_len} duplicated files. ")
         self.tk_root.mainloop()
         # Move images
         self.move_images()

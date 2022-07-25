@@ -1,6 +1,7 @@
 import os
 import sys
 import tkinter as tk
+from Logs import logs
 
 
 class SettingsManager:
@@ -101,12 +102,12 @@ class SettingsManager:
         )
         confirm_button.grid(row=4, column=2)
         # Start tkinter loop
-        print(f"Opening tkinter parameters window. ")
+        logs(f"Opening tkinter parameters window. ")
         self.tk_root.mainloop()
 
     @staticmethod
     def delete_window_event():
-        print("Settings window closed. Program exiting 2...")
+        logs("Settings window closed. Program exiting 2...")
         sys.exit(2)
 
     def replace_root_dir(self):
@@ -124,7 +125,7 @@ class SettingsManager:
     def confirm_event(self):
         # Format values
         ROOT_DIR = self.root_dir_entry.get()
-        print(ROOT_DIR)
+        logs(ROOT_DIR)
         while ROOT_DIR and (ROOT_DIR[-1] == "\\" or ROOT_DIR[-1] == " "):
             ROOT_DIR = ROOT_DIR[:-1]
         while ROOT_DIR and ROOT_DIR[0] == " ":
@@ -148,23 +149,23 @@ class SettingsManager:
         # Logs for BIN_DIR
         if BIN_DIR:
             if not os.path.exists(BIN_DIR) or not os.path.isdir(BIN_DIR):
-                print(
+                logs(
                     f"{BIN_DIR} does not exist or is not a directory. Creating BIN_DIR directory..."
                 )
                 os.mkdir(BIN_DIR)
             elif os.listdir(BIN_DIR):
-                print(
+                logs(
                     f"Warning : the following directory already exists and is not empty : {BIN_DIR}. \nYou may overwrite some files."
                 )
         else:
-            print("No BIN_DIR specified. The duplicates will not be removed.")
+            logs("No BIN_DIR specified. The duplicates will not be removed.")
         # Set settings values
         self.ROOT_DIR = ROOT_DIR
         self.BIN_DIR = BIN_DIR
         self.IMAGE_EXTENSIONS = IMAGE_EXTENSIONS
         self.VIDEO_EXTENSIONS = VIDEO_EXTENSIONS
         self.PERCENTAGE = PERCENTAGE
-        print(
+        logs(
             f"Final settings loaded :\n\tROOT_DIR: {ROOT_DIR}\n\tBIN_DIR: {BIN_DIR}\n\tFORMATS: {IMAGE_EXTENSIONS}\n\tPROGRESSION_FREQUENCY: {PERCENTAGE}\n\tVIDEO_EXTENSIONS: {VIDEO_EXTENSIONS}\n"
         )
         # Close tkinter window
@@ -172,7 +173,7 @@ class SettingsManager:
 
     def load_default_settings(self):
         if not os.path.exists("./settings.txt"):
-            print("No default settings.")
+            logs("No default settings.")
             return
         with open("./settings.txt", encoding="utf-8") as settings:
             lines = settings.readlines()
@@ -201,7 +202,7 @@ class SettingsManager:
             PERCENTAGE = 0.01
         else:
             PERCENTAGE = float(PERCENTAGE)
-        print(
+        logs(
             f"Default settings loaded :\n\tROOT_DIR: {ROOT_DIR}\n\tBIN_DIR: {BIN_DIR}\n\tFORMATS: {IMAGE_EXTENSIONS}\n\tPROGRESSION_FREQUENCY: {PERCENTAGE}\n\tVIDEO_EXTENSIONS: {VIDEO_EXTENSIONS}\n"
         )
         self.ROOT_DIR = ROOT_DIR
