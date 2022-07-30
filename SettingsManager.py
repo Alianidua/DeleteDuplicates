@@ -1,7 +1,7 @@
 import os
 import sys
 import tkinter as tk
-from Logs import logs
+from Utils import logs
 
 
 class SettingsManager:
@@ -17,11 +17,11 @@ class SettingsManager:
         # Tkinter root
         tk_root = tk.Tk()
         tk_root.wm_title("Duplicates Remover - Settings")
-        tk_root.geometry("1000x200")
+        tk_root.geometry("810x200")
         self.tk_root = tk_root
-        labels_shape = (40, 2)
-        entries_width = 90
-        buttons_width = 15
+        labels_shape = (35, 2)
+        entries_width = 70
+        buttons_width = 10
         # Handle window closure
         tk_root.wm_protocol(
             "WM_DELETE_WINDOW", func=SettingsManager.delete_window_event
@@ -92,6 +92,15 @@ class SettingsManager:
             height=labels_shape[1],
         ).grid(row=4, column=0)
         self.percentage_entry.insert(0, self.PERCENTAGE)
+        # Set current as default button
+        confirm_button = tk.Button(
+            tk_root,
+            width=buttons_width,
+            text="Set as default",
+            command=self.set_default_event,
+            bg="#A9A9A9",
+        )
+        confirm_button.grid(row=3, column=2)
         # Confirm button
         confirm_button = tk.Button(
             tk_root,
@@ -122,7 +131,7 @@ class SettingsManager:
             self.bin_dir_entry.delete(0, tk.END)
             self.bin_dir_entry.insert(0, new_dir)
 
-    def confirm_event(self):
+    def confirm_event(self, destroy=True):
         # Format values
         ROOT_DIR = self.root_dir_entry.get()
         logs(ROOT_DIR)
@@ -165,51 +174,70 @@ class SettingsManager:
         self.IMAGE_EXTENSIONS = IMAGE_EXTENSIONS
         self.VIDEO_EXTENSIONS = VIDEO_EXTENSIONS
         self.PERCENTAGE = PERCENTAGE
-        logs(
-            f"Final settings loaded :\n\tROOT_DIR: {ROOT_DIR}\n\tBIN_DIR: {BIN_DIR}\n\tFORMATS: {IMAGE_EXTENSIONS}\n\tPROGRESSION_FREQUENCY: {PERCENTAGE}\n\tVIDEO_EXTENSIONS: {VIDEO_EXTENSIONS}\n"
-        )
         # Close tkinter window
-        self.tk_root.destroy()
+        if destroy:
+            self.tk_root.destroy()
+            logs(
+                f"Final settings loaded :\n\tROOT_DIR: {ROOT_DIR}\n\tBIN_DIR: {BIN_DIR}\n\tFORMATS: {IMAGE_EXTENSIONS}\n\tPROGRESSION_FREQUENCY: {PERCENTAGE}\n\tVIDEO_EXTENSIONS: {VIDEO_EXTENSIONS}\n"
+            )
+        else:
+            logs(
+                f"Settings loaded and written as default in ./settings.txt :\n\tROOT_DIR: {ROOT_DIR}\n\tBIN_DIR: {BIN_DIR}\n\tFORMATS: {IMAGE_EXTENSIONS}\n\tPROGRESSION_FREQUENCY: {PERCENTAGE}\n\tVIDEO_EXTENSIONS: {VIDEO_EXTENSIONS}\n"
+            )
+
+    def set_default_event(self):
+        self.confirm_event(destroy=False)
+        if os.path.exists("./settings.txt"):
+            os.remove("./settings.txt")
+        with open("./settings.txt", "w", encoding="utf-8") as settings:
+            settings.write("ROOT_DIRECTORY=" + self.ROOT_DIR + "\n")
+            settings.write("BIN_DIRECTORY=" + self.BIN_DIR + "\n")
+            settings.write("IMAGE_FORMATS=" + ",".join(self.IMAGE_EXTENSIONS) + "\n")
+            settings.write("VIDEO_FORMATS=" + ",".join(self.VIDEO_EXTENSIONS) + "\n")
+            settings.write("PROGRESSION_FREQUENCY=" + str(self.PERCENTAGE))
 
     def load_default_settings(self):
         if not os.path.exists("./settings.txt"):
             logs("No default settings.")
             return
-        with open("./settings.txt", encoding="utf-8") as settings:
-            lines = settings.readlines()
-        ROOT_DIR = lines[0].split("=")[1]
-        while ROOT_DIR and (
-            ROOT_DIR[-1] == "\\" or ROOT_DIR[-1] == " " or ROOT_DIR[-1] == "\n"
-        ):
-            ROOT_DIR = ROOT_DIR[:-1]
-        while ROOT_DIR and ROOT_DIR[0] == " ":
-            ROOT_DIR = ROOT_DIR[1:]
-        BIN_DIR = lines[1].split("=")[1]
-        while BIN_DIR and (
-            BIN_DIR[-1] == "\\" or BIN_DIR[-1] == " " or BIN_DIR[-1] == "\n"
-        ):
-            BIN_DIR = BIN_DIR[:-1]
-        while BIN_DIR and BIN_DIR[0] == " ":
-            BIN_DIR = BIN_DIR[1:]
-        IMAGE_EXTENSIONS = (
-            lines[2].split("=")[1].strip(" ").strip("\n").strip("\t").split(",")
-        )
-        VIDEO_EXTENSIONS = (
-            lines[3].split("=")[1].strip(" ").strip("\n").strip("\t").split(",")
-        )
-        PERCENTAGE = lines[4].split("=")[1].strip(" ").strip("\n").strip("\t")
-        if not PERCENTAGE:
-            PERCENTAGE = 0.01
-        else:
-            PERCENTAGE = float(PERCENTAGE)
-        logs(
-            f"Default settings loaded :\n\tROOT_DIR: {ROOT_DIR}\n\tBIN_DIR: {BIN_DIR}\n\tFORMATS: {IMAGE_EXTENSIONS}\n\tPROGRESSION_FREQUENCY: {PERCENTAGE}\n\tVIDEO_EXTENSIONS: {VIDEO_EXTENSIONS}\n"
-        )
-        self.ROOT_DIR = ROOT_DIR
-        self.BIN_DIR = BIN_DIR
-        self.IMAGE_EXTENSIONS = IMAGE_EXTENSIONS
-        self.VIDEO_EXTENSIONS = VIDEO_EXTENSIONS
-        self.PERCENTAGE = PERCENTAGE
+        try:
+            with open("./settings.txt", encoding="utf-8") as settings:
+                lines = settings.readlines()
+            ROOT_DIR = lines[0].split("=")[1]
+            while ROOT_DIR and (
+                ROOT_DIR[-1] == "\\" or ROOT_DIR[-1] == " " or ROOT_DIR[-1] == "\n"
+            ):
+                ROOT_DIR = ROOT_DIR[:-1]
+            while ROOT_DIR and ROOT_DIR[0] == " ":
+                ROOT_DIR = ROOT_DIR[1:]
+            BIN_DIR = lines[1].split("=")[1]
+            while BIN_DIR and (
+                BIN_DIR[-1] == "\\" or BIN_DIR[-1] == " " or BIN_DIR[-1] == "\n"
+            ):
+                BIN_DIR = BIN_DIR[:-1]
+            while BIN_DIR and BIN_DIR[0] == " ":
+                BIN_DIR = BIN_DIR[1:]
+            IMAGE_EXTENSIONS = (
+                lines[2].split("=")[1].strip(" ").strip("\n").strip("\t").split(",")
+            )
+            VIDEO_EXTENSIONS = (
+                lines[3].split("=")[1].strip(" ").strip("\n").strip("\t").split(",")
+            )
+            PERCENTAGE = lines[4].split("=")[1].strip(" ").strip("\n").strip("\t")
+            if not PERCENTAGE:
+                PERCENTAGE = 0.01
+            else:
+                PERCENTAGE = float(PERCENTAGE)
+            logs(
+                f"Default settings loaded :\n\tROOT_DIR: {ROOT_DIR}\n\tBIN_DIR: {BIN_DIR}\n\tFORMATS: {IMAGE_EXTENSIONS}\n\tPROGRESSION_FREQUENCY: {PERCENTAGE}\n\tVIDEO_EXTENSIONS: {VIDEO_EXTENSIONS}\n"
+            )
+            self.ROOT_DIR = ROOT_DIR
+            self.BIN_DIR = BIN_DIR
+            self.IMAGE_EXTENSIONS = IMAGE_EXTENSIONS
+            self.VIDEO_EXTENSIONS = VIDEO_EXTENSIONS
+            self.PERCENTAGE = PERCENTAGE
+        except Exception as e:
+            logs("Error while parsing default settings. Continuing")
 
     def get_settings(self):
         return (

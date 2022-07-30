@@ -1,10 +1,9 @@
 import os
 import sys
-import numpy as np
+import cv2 as cv
 import tkinter as tk
 from PIL import Image
-from Logs import logs
-from cv2 import VideoCapture
+from Utils import logs
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
@@ -26,6 +25,7 @@ class DuplicatesMover:
         tk_root = tk.Tk()
         self.tk_root = tk_root
         tk_root.wm_title("Duplicated images - check the images you want to remove")
+        tk_root.geometry("1500x800")
         # Handle window closure
         tk_root.wm_protocol(
             "WM_DELETE_WINDOW", func=DuplicatesMover.delete_window_event
@@ -38,20 +38,33 @@ class DuplicatesMover:
         bottom_frame.pack(side=tk.BOTTOM, pady=20)
         buttons_frame = tk.Frame(bottom_frame)
         buttons_frame.pack(side=tk.LEFT)
-        # Check button
-        self.remove = tk.BooleanVar()
-        self.remove.set(True)
-        check_button = tk.Checkbutton(
+        # Check button old
+        self.remove_old = tk.BooleanVar()
+        self.remove_old.set(False)
+        check_button_old = tk.Checkbutton(
             buttons_frame,
-            text="Remove image",
-            variable=self.remove,
+            text="Remove left image",
+            variable=self.remove_old,
             onvalue=True,
             offvalue=False,
-            command=self.check_image_event,
+            command=self.check_old_image_event,
         )
-        check_button.pack(side=tk.TOP)
-        check_button["font"] = small_font
-        tk_root.bind("<KeyPress-space>", self.check_image_keybind_event)
+        check_button_old.pack(side=tk.TOP)
+        check_button_old["font"] = small_font
+        # Check button new
+        self.remove_new = tk.BooleanVar()
+        self.remove_new.set(True)
+        check_button_new = tk.Checkbutton(
+            buttons_frame,
+            text="Remove right image",
+            variable=self.remove_new,
+            onvalue=True,
+            offvalue=False,
+            command=self.check_new_image_event,
+        )
+        check_button_new.pack(side=tk.TOP)
+        check_button_new["font"] = small_font
+        tk_root.bind("<KeyPress-space>", self.check_new_image_keybind_event)
         # Button previous
         button_prev = tk.Button(
             buttons_frame, text="Prev", width=6, bg="#DCDCDC", command=self.prev_event
@@ -66,12 +79,13 @@ class DuplicatesMover:
         button_next.pack()
         button_next["font"] = font
         tk_root.bind("<Right>", self.next_event)
-        # Button confirm
-        button_confirm = tk.Button(
+        # Button
+        self.confirm = False
+        self.button_confirm = tk.Button(
             bottom_frame, text="Confirm", bg="red", command=self.confirm_event
         )
-        button_confirm.pack(side=tk.RIGHT)
-        button_confirm["font"] = font
+        self.button_confirm.pack(side=tk.RIGHT, padx=100)
+        self.button_confirm["font"] = font
         # Images to display
         self.ax, self.fig = None, None
         self.ax_old, self.ax_new = None, None
@@ -91,20 +105,22 @@ class DuplicatesMover:
         self.fig.set_size_inches(15, 15)
         title = f"Duplicates {self.i + 1}/{self.duplicates_len}"
         if old.split(".")[-1] in self.VIDEOS_EXT:
-            videos = (VideoCapture(old), VideoCapture(new))
-            _, old_image = videos[0].read()
-            _, new_image = videos[1].read()
+            videos = (cv.VideoCapture(old), cv.VideoCapture(new))
+            old_image = cv.cvtColor(videos[0].read()[1], cv.COLOR_BGR2RGB)
+            new_image = cv.cvtColor(videos[1].read()[1], cv.COLOR_BGR2RGB)
             old_title = f"Oldest video\n{old[self.root_dir_len:]}\n{old_date}"
             new_title = f"Newest video\n{new[self.root_dir_len:]}\n{new_date}"
             videos[0].release(), videos[1].release()
         else:
             old_image = Image.open(old)
+            old_image.draft("RGB", (old_image.size[0] // 64, old_image.size[1] // 64))
             new_image = Image.open(new)
+            new_image.draft("RGB", (new_image.size[0] // 64, new_image.size[1] // 64))
             old_title = f"Oldest image\n{old[self.root_dir_len:]}\n{old_date}"
             new_title = f"Newest image\n{new[self.root_dir_len:]}\n{new_date}"
         self.plt_cache[self.i] = (
-            np.asarray(old_image),
-            np.asarray(new_image),
+            old_image,
+            new_image,
             old_title,
             new_title,
             title,
@@ -127,35 +143,46 @@ class DuplicatesMover:
     def display_new_images(self):
         files = self.duplicates[self.i]
         # Compare creation dates
-        old, new, old_date, new_date, remove = (
+        old, new, old_date, new_date, remove_old, remove_new = (
             files.old,
             files.new,
             files.old_date,
             files.new_date,
-            files.remove,
+            files.remove_old,
+            files.remove_new,
         )
-        # Update check button value
-        self.remove.set(remove)
+        # Update buttons value
+        self.remove_old.set(remove_old)
+        self.remove_new.set(remove_new)
+        if self.confirm:
+            self.confirm = False
+            self.button_confirm.configure(bg="red")
         # Load images
         if not self.plt_cache[self.i]:  # First time showing these duplicates
             title = f"Duplicates {self.i + 1}/{self.duplicates_len}"
             if (
                 old.split(".")[-1] in self.VIDEOS_EXT
             ):  # Show first frame of videos for first time
-                videos = (VideoCapture(old), VideoCapture(new))
-                _, old_image = videos[0].read()
-                _, new_image = videos[1].read()
+                videos = (cv.VideoCapture(old), cv.VideoCapture(new))
+                old_image = cv.cvtColor(videos[0].read()[1], cv.COLOR_BGR2RGB)
+                new_image = cv.cvtColor(videos[1].read()[1], cv.COLOR_BGR2RGB)
                 old_title = f"Oldest video\n{old[self.root_dir_len:]}\n{old_date}"
                 new_title = f"Newest video\n{new[self.root_dir_len:]}\n{new_date}"
                 videos[0].release(), videos[1].release()
             else:  # Show images for first time
                 old_image = Image.open(old)
+                old_image.draft(
+                    "RGB", (old_image.size[0] // 64, old_image.size[1] // 64)
+                )
                 new_image = Image.open(new)
+                new_image.draft(
+                    "RGB", (new_image.size[0] // 64, new_image.size[1] // 64)
+                )
                 old_title = f"Oldest image\n{old[self.root_dir_len:]}\n{old_date}"
                 new_title = f"Newest image\n{new[self.root_dir_len:]}\n{new_date}"
             self.plt_cache[self.i] = (
-                np.asarray(old_image),
-                np.asarray(new_image),
+                old_image,
+                new_image,
                 old_title,
                 new_title,
                 title,
@@ -170,12 +197,19 @@ class DuplicatesMover:
         self.fig.canvas.draw()
         self.fig.canvas.flush_events()
 
-    def check_image_event(self):
-        self.duplicates[self.i].remove = self.remove.get()
+    def check_old_image_event(self):
+        self.duplicates[self.i].remove_old = self.remove_old.get()
 
-    def check_image_keybind_event(self, event):
-        self.remove.set(not self.remove.get())
-        self.duplicates[self.i].remove = self.remove.get()
+    def check_new_image_event(self):
+        self.duplicates[self.i].remove_new = self.remove_new.get()
+
+    def check_old_image_keybind_event(self, event):
+        self.remove_old.set(not self.remove_old.get())
+        self.duplicates[self.i].remove_old = self.remove_old.get()
+
+    def check_new_image_keybind_event(self, event):
+        self.remove_new.set(not self.remove_new.get())
+        self.duplicates[self.i].remove_new = self.remove_new.get()
 
     def prev_event(self, *args):
         self.i -= 1
@@ -190,20 +224,31 @@ class DuplicatesMover:
         self.display_new_images()
 
     def confirm_event(self):
-        self.tk_root.destroy()
-        self.tk_root.quit()
+        if self.confirm:
+            self.tk_root.destroy()
+            self.tk_root.quit()
+        else:
+            self.confirm = True
+            self.button_confirm.configure(bg="lime green")
 
     def move_images(self):
-        to_remove = tuple(files.new for files in self.duplicates if files.remove)
+        to_remove = [files.new for files in self.duplicates if files.remove_new] + [
+            files.old for files in self.duplicates if files.remove_old
+        ]
         logs(f"Registered {len(to_remove)} files to move.")
         if self.BIN_DIR:
             logs(f"Moving them to bin folder: {self.BIN_DIR}")
             for duplicate_path in to_remove:
                 if os.path.exists(duplicate_path):
-                    os.rename(
-                        duplicate_path,
-                        f"{self.BIN_DIR}/{duplicate_path.split('/')[-1]}",
-                    )
+                    target_path = f"{self.BIN_DIR}/{duplicate_path.split('/')[-1]}"
+                    if os.path.exists(target_path):
+                        logs(
+                            "Warning:",
+                            target_path,
+                            "already exists and will be erased.",
+                        )
+                        os.remove(target_path)
+                    os.rename(duplicate_path, target_path)
         else:
             logs("No BIN_DIR defined. Duplicates will not be moved.")
 

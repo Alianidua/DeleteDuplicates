@@ -7,7 +7,7 @@ from PIL import Image
 
 Image.MAX_IMAGE_PIXELS = None
 import get_image_size
-from Logs import logs
+from Utils import logs
 from tkinter import messagebox
 from recordclass import recordclass
 from SettingsManager import SettingsManager
@@ -105,7 +105,7 @@ def load_image_pixels(im_path, draft_shape, locations, queue_cache, im_index):
 
 # Main loop; iterate on every images
 DuplicatesInfo = recordclass(
-    "DuplicatesInfo", ["old", "new", "old_date", "new_date", "remove"]
+    "DuplicatesInfo", ["old", "new", "old_date", "new_date", "remove_old", "remove_new"]
 )
 duplicates = list()
 
@@ -127,9 +127,9 @@ def compare_dates(p1, p2):
 
 def iterate_queue(queue, queue_cache, ext, shape, i, percentage):
     # Compute pixels positions to use for comparison
-    draft_shape = (shape[0] // 16, shape[0] // 16)
+    draft_shape = (shape[0] // 16, shape[1] // 16)
     locations = [
-        (draft_shape[0] // i, draft_shape[0] // j)
+        (draft_shape[0] // i, draft_shape[1] // j)
         for i in [1, 1.25, 2, 2.75, 3]
         for j in [1, 1.25, 2, 2.75, 3]
     ]
@@ -154,7 +154,8 @@ def iterate_queue(queue, queue_cache, ext, shape, i, percentage):
                         new=new,
                         old_date=old_date,
                         new_date=new_date,
-                        remove=True,
+                        remove_old=False,
+                        remove_new=True,
                     )
                 )
                 logs("Duplicates :", im1_path, im2_path)
@@ -193,7 +194,8 @@ def iterate_paths():
                             new=new,
                             old_date=old_date,
                             new_date=new_date,
-                            remove=True,
+                            remove_old=False,
+                            remove_new=True,
                         )
                     )
     logs("100 %. Done.")

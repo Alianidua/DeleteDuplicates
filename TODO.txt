@@ -1,7 +1,17 @@
-- Pouvoir sélectionner plusieurs dossiers différents à traiter communément ou séquentiellemnt
-- Documentation
-- Bouton pour set as default
+TODO :
+- Eviter d'être à court de RAM
+- Documentation FR
+- Ajouter des images à la doc
 
-Fixed:
-- Optimization : lookup table to avoid loading multiple times the same image
-- Added logs module
+DONE :
+- Réduire la taille des fenêtres pour que ça ne dépasse pas de l'écran
+- Bouton pour set setting as default
+- Fix draft shape
+- Optimisation vitesse affichage images
+- Choisir quelle image on veut garder (old/new)
+- Fix couleurs des vidéos à l'affichage
+- Cliquer 2 fois pour confirmer la sélection des images
+
+EXTRA :
+- Pouvoir sélectionner plusieurs dossiers différents à traiter ensemble (ou pouvoir exclure des dossiers)
+- Documentation ENG
