@@ -241,7 +241,7 @@ if __name__ == "__main__":
         messagebox.showerror(
             "Something went wrong :( check the logs or message me", error_traceback
         )
-        logs("Something went wrong :( check the logs or message me")
-        logs("Press enter to close terminal.")
+        logs("Something went wrong :( check the logs or message me.")
+        logs("Press enter twice to close terminal.")
         input()
         sys.exit(1)

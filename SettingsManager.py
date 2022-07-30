@@ -12,6 +12,7 @@ class SettingsManager:
         self.IMAGE_EXTENSIONS = ""
         self.VIDEO_EXTENSIONS = ""
         self.PERCENTAGE = 0.1
+        self.settings = "./settings.txt"
         self.load_default_settings()
 
         # Tkinter root
@@ -159,12 +160,11 @@ class SettingsManager:
         if BIN_DIR:
             if not os.path.exists(BIN_DIR) or not os.path.isdir(BIN_DIR):
                 logs(
-                    f"{BIN_DIR} does not exist or is not a directory. Creating BIN_DIR directory..."
+                    f"{BIN_DIR} does not exist or is not a directory. It will be created when you close the window."
                 )
-                os.mkdir(BIN_DIR)
             elif os.listdir(BIN_DIR):
                 logs(
-                    f"Warning : the following directory already exists and is not empty : {BIN_DIR}. \nYou may overwrite some files."
+                    f"Warning : the following directory already exists and is not empty : {BIN_DIR}. \nSome files in this directory may be overwritten."
                 )
         else:
             logs("No BIN_DIR specified. The duplicates will not be removed.")
@@ -180,16 +180,21 @@ class SettingsManager:
             logs(
                 f"Final settings loaded :\n\tROOT_DIR: {ROOT_DIR}\n\tBIN_DIR: {BIN_DIR}\n\tFORMATS: {IMAGE_EXTENSIONS}\n\tPROGRESSION_FREQUENCY: {PERCENTAGE}\n\tVIDEO_EXTENSIONS: {VIDEO_EXTENSIONS}\n"
             )
+            if not os.path.exists(BIN_DIR) or not os.path.isdir(BIN_DIR):
+                logs(
+                    f"{BIN_DIR} does not exist or is not a directory. Creating BIN_DIR directory..."
+                )
+                os.mkdir(BIN_DIR)
         else:
             logs(
-                f"Settings loaded and written as default in ./settings.txt :\n\tROOT_DIR: {ROOT_DIR}\n\tBIN_DIR: {BIN_DIR}\n\tFORMATS: {IMAGE_EXTENSIONS}\n\tPROGRESSION_FREQUENCY: {PERCENTAGE}\n\tVIDEO_EXTENSIONS: {VIDEO_EXTENSIONS}\n"
+                f"Settings loaded and written as default in {self.settings} :\n\tROOT_DIR: {ROOT_DIR}\n\tBIN_DIR: {BIN_DIR}\n\tFORMATS: {IMAGE_EXTENSIONS}\n\tPROGRESSION_FREQUENCY: {PERCENTAGE}\n\tVIDEO_EXTENSIONS: {VIDEO_EXTENSIONS}\n"
             )
 
     def set_default_event(self):
         self.confirm_event(destroy=False)
-        if os.path.exists("./settings.txt"):
-            os.remove("./settings.txt")
-        with open("./settings.txt", "w", encoding="utf-8") as settings:
+        if os.path.exists(self.settings):
+            os.remove(self.settings)
+        with open(self.settings, "w", encoding="utf-8") as settings:
             settings.write("ROOT_DIRECTORY=" + self.ROOT_DIR + "\n")
             settings.write("BIN_DIRECTORY=" + self.BIN_DIR + "\n")
             settings.write("IMAGE_FORMATS=" + ",".join(self.IMAGE_EXTENSIONS) + "\n")
@@ -197,11 +202,11 @@ class SettingsManager:
             settings.write("PROGRESSION_FREQUENCY=" + str(self.PERCENTAGE))
 
     def load_default_settings(self):
-        if not os.path.exists("./settings.txt"):
+        if not os.path.exists(self.settings):
             logs("No default settings.")
             return
         try:
-            with open("./settings.txt", encoding="utf-8") as settings:
+            with open(self.settings, encoding="utf-8") as settings:
                 lines = settings.readlines()
             ROOT_DIR = lines[0].split("=")[1]
             while ROOT_DIR and (
