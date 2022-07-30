@@ -1,5 +1,9 @@
 # THIS README IS NOT UP-TO-DATE
 
+I know there are a lot of bad practices and a lot of room for improvement, but I do not intend to fix everything because I am too lazy.
+
+# DEPRECATED README
+
 The aim of this program is to delete all the duplicated images in a directory and its subdirectories.
 
 # Requirements
