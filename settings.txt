@@ -1,4 +1,4 @@
-ROOT_DIRECTORY=C:/Users/victi/Desktop/lol
+ROOT_DIRECTORY=C:/Users/victi/Desktop/Lorèze
 BIN_DIRECTORY=C:\Users\victi\Desktop\duplicates
 IMAGE_FORMATS=jpg,jpeg,JPG,JPEG,png,PNG
 VIDEO_FORMATS=mp4

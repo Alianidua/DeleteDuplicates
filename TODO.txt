@@ -5,6 +5,7 @@ TODO :
 
 DONE :
 - Enlever le cache qui prend trop de RAM
+- Fix relancer un scan
 
 EXTRA :
 - Pouvoir sélectionner plusieurs dossiers différents à traiter ensemble (ou pouvoir exclure des dossiers)

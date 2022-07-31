@@ -206,6 +206,10 @@ if __name__ == "__main__":
     try:
         while True:
             t_start = time.time()
+            # Clear variables
+            total_images = 0
+            total_videos = 0
+            duplicates = list()
             # Load settings
             settings_manager = SettingsManager()
             (

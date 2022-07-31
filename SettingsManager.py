@@ -164,7 +164,7 @@ class SettingsManager:
                 )
             elif os.listdir(BIN_DIR):
                 logs(
-                    f"Warning : the following directory already exists and is not empty : {BIN_DIR}. \nSome files in this directory may be overwritten."
+                    f"Warning : the following directory already exists and is not empty : {BIN_DIR} \nSome files in this directory may be overwritten"
                 )
         else:
             logs("No BIN_DIR specified. The duplicates will not be removed.")
@@ -177,6 +177,7 @@ class SettingsManager:
         # Close tkinter window
         if destroy:
             self.tk_root.destroy()
+            self.tk_root.quit()
             logs(
                 f"Final settings loaded :\n\tROOT_DIR: {ROOT_DIR}\n\tBIN_DIR: {BIN_DIR}\n\tFORMATS: {IMAGE_EXTENSIONS}\n\tPROGRESSION_FREQUENCY: {PERCENTAGE}\n\tVIDEO_EXTENSIONS: {VIDEO_EXTENSIONS}\n"
             )
