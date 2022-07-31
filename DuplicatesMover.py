@@ -89,7 +89,6 @@ class DuplicatesMover:
         # Images to display
         self.ax, self.fig = None, None
         self.ax_old, self.ax_new = None, None
-        self.plt_cache = [None for _ in range(self.duplicates_len)]
 
         # First display
         files = self.duplicates[self.i]
@@ -103,7 +102,6 @@ class DuplicatesMover:
         # Plt figure
         self.fig, self.ax = plt.subplots(1, 2)
         self.fig.set_size_inches(15, 15)
-        title = f"Duplicates {self.i + 1}/{self.duplicates_len}"
         if old.split(".")[-1] in self.VIDEOS_EXT:
             videos = (cv.VideoCapture(old), cv.VideoCapture(new))
             old_image = cv.cvtColor(videos[0].read()[1], cv.COLOR_BGR2RGB)
@@ -118,19 +116,12 @@ class DuplicatesMover:
             new_image.draft("RGB", (new_image.size[0] // 64, new_image.size[1] // 64))
             old_title = f"Oldest image\n{old[self.root_dir_len:]}\n{old_date}"
             new_title = f"Newest image\n{new[self.root_dir_len:]}\n{new_date}"
-        self.plt_cache[self.i] = (
-            old_image,
-            new_image,
-            old_title,
-            new_title,
-            title,
-        )
         # Update plot
-        self.ax_old = self.ax[0].imshow(self.plt_cache[self.i][0])
-        self.ax_new = self.ax[1].imshow(self.plt_cache[self.i][1])
-        self.ax[0].set_title(self.plt_cache[self.i][2], fontsize=10)
-        self.ax[1].set_title(self.plt_cache[self.i][3], fontsize=10)
-        plt.suptitle(self.plt_cache[self.i][4], y=0.9)
+        self.ax_old = self.ax[0].imshow(old_image)
+        self.ax_new = self.ax[1].imshow(new_image)
+        self.ax[0].set_title(old_title, fontsize=10)
+        self.ax[1].set_title(new_title, fontsize=10)
+        plt.suptitle(f"Duplicates {self.i + 1}/{self.duplicates_len}", y=0.9)
         # Tkinter
         fig_canvas = FigureCanvasTkAgg(self.fig, master=self.tk_root)
         fig_canvas.get_tk_widget().pack(side=tk.TOP)
@@ -158,41 +149,32 @@ class DuplicatesMover:
             self.confirm = False
             self.button_confirm.configure(bg="red")
         # Load images
-        if not self.plt_cache[self.i]:  # First time showing these duplicates
-            title = f"Duplicates {self.i + 1}/{self.duplicates_len}"
-            if (
-                old.split(".")[-1] in self.VIDEOS_EXT
-            ):  # Show first frame of videos for first time
-                videos = (cv.VideoCapture(old), cv.VideoCapture(new))
-                old_image = cv.cvtColor(videos[0].read()[1], cv.COLOR_BGR2RGB)
-                new_image = cv.cvtColor(videos[1].read()[1], cv.COLOR_BGR2RGB)
-                old_title = f"Oldest video\n{old[self.root_dir_len:]}\n{old_date}"
-                new_title = f"Newest video\n{new[self.root_dir_len:]}\n{new_date}"
-                videos[0].release(), videos[1].release()
-            else:  # Show images for first time
-                old_image = Image.open(old)
-                old_image.draft(
-                    "RGB", (old_image.size[0] // 64, old_image.size[1] // 64)
-                )
-                new_image = Image.open(new)
-                new_image.draft(
-                    "RGB", (new_image.size[0] // 64, new_image.size[1] // 64)
-                )
-                old_title = f"Oldest image\n{old[self.root_dir_len:]}\n{old_date}"
-                new_title = f"Newest image\n{new[self.root_dir_len:]}\n{new_date}"
-            self.plt_cache[self.i] = (
-                old_image,
-                new_image,
-                old_title,
-                new_title,
-                title,
+        if (
+            old.split(".")[-1] in self.VIDEOS_EXT
+        ):  # Show first frame of videos for first time
+            videos = (cv.VideoCapture(old), cv.VideoCapture(new))
+            old_image = cv.cvtColor(videos[0].read()[1], cv.COLOR_BGR2RGB)
+            new_image = cv.cvtColor(videos[1].read()[1], cv.COLOR_BGR2RGB)
+            old_title = f"Oldest video\n{old[self.root_dir_len:]}\n{old_date}"
+            new_title = f"Newest video\n{new[self.root_dir_len:]}\n{new_date}"
+            videos[0].release(), videos[1].release()
+        else:  # Show images for first time
+            old_image = Image.open(old)
+            old_image.draft(
+                "RGB", (old_image.size[0] // 64, old_image.size[1] // 64)
             )
+            new_image = Image.open(new)
+            new_image.draft(
+                "RGB", (new_image.size[0] // 64, new_image.size[1] // 64)
+            )
+            old_title = f"Oldest image\n{old[self.root_dir_len:]}\n{old_date}"
+            new_title = f"Newest image\n{new[self.root_dir_len:]}\n{new_date}"
         # Update plot
-        self.ax_old.set_data(self.plt_cache[self.i][0])
-        self.ax_new.set_data(self.plt_cache[self.i][1])
-        self.ax[0].set_title(self.plt_cache[self.i][2], fontsize=10)
-        self.ax[1].set_title(self.plt_cache[self.i][3], fontsize=10)
-        plt.suptitle(self.plt_cache[self.i][4], y=0.9)
+        self.ax_old.set_data(old_image)
+        self.ax_new.set_data(new_image)
+        self.ax[0].set_title(old_title, fontsize=10)
+        self.ax[1].set_title(new_title, fontsize=10)
+        plt.suptitle(f"Duplicates {self.i + 1}/{self.duplicates_len}", y=0.9)
         # Flush
         self.fig.canvas.draw()
         self.fig.canvas.flush_events()

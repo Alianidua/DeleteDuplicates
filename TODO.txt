@@ -4,8 +4,7 @@ TODO :
 - Ajouter des images à la doc
 
 DONE :
-- Créer le repo duplicates après avoir fermé la fenêtre des paramètres
-- Permissions errors : il faut désactiver l'antivirus...
+- Enlever le cache qui prend trop de RAM
 
 EXTRA :
 - Pouvoir sélectionner plusieurs dossiers différents à traiter ensemble (ou pouvoir exclure des dossiers)
