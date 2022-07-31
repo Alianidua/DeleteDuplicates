@@ -160,13 +160,9 @@ class DuplicatesMover:
             videos[0].release(), videos[1].release()
         else:  # Show images for first time
             old_image = Image.open(old)
-            old_image.draft(
-                "RGB", (old_image.size[0] // 64, old_image.size[1] // 64)
-            )
+            old_image.draft("RGB", (old_image.size[0] // 64, old_image.size[1] // 64))
             new_image = Image.open(new)
-            new_image.draft(
-                "RGB", (new_image.size[0] // 64, new_image.size[1] // 64)
-            )
+            new_image.draft("RGB", (new_image.size[0] // 64, new_image.size[1] // 64))
             old_title = f"Oldest image\n{old[self.root_dir_len:]}\n{old_date}"
             new_title = f"Newest image\n{new[self.root_dir_len:]}\n{new_date}"
         # Update plot
