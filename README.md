@@ -42,7 +42,7 @@ It must be runned multiple times to detect all duplicates properly.
 pyinstaller --onefile MoveDuplicates.py && cp settings.txt dist/settings.txt
 ```
 
-Run executable without closing child :
+Run executable without closing child process :
 
 ```
 cmd.exe /k cmd /c MoveDuplicates.exe
