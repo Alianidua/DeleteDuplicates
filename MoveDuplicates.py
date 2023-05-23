@@ -36,15 +36,21 @@ def list_files(directory=ROOT_DIR):
         if os.path.isdir(fpath):
             list_files(fpath)
         elif ext in IMAGE_EXTENSIONS:
-            shape = get_image_size.get_image_size(fpath)
-            if shape not in images[ext]:
-                images[ext][get_image_size.get_image_size(fpath)] = []
-            images[ext][get_image_size.get_image_size(fpath)].append(fpath)
+            try:
+                shape = get_image_size.get_image_size(fpath)
+                if shape not in images[ext]:
+                    images[ext][get_image_size.get_image_size(fpath)] = []
+                images[ext][get_image_size.get_image_size(fpath)].append(fpath)
+            except Exception as e:
+                log(f"WARNING : something wrong happened with this file : '{fpath}'\n{e}")
         elif ext in VIDEO_EXTENSIONS:
-            size = os.stat(fpath).st_size
-            if size not in videos[ext]:
-                videos[ext][size] = []
-            videos[ext][size].append(fpath)
+            try:
+                size = os.stat(fpath).st_size
+                if size not in videos[ext]:
+                    videos[ext][size] = []
+                videos[ext][size].append(fpath)
+            except Exception as e:
+                log(f"WARNING : something wrong happened with this file : '{fpath}'\n{e}")
 
 
 # Count number of images per extension and shape
