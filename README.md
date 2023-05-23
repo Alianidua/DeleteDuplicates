@@ -1,17 +1,20 @@
-# THIS README IS NOT UP-TO-DATE
-
-I know there are a lot of bad practices and a lot of room for improvement, but I do not intend to fix everything because I am too lazy.
-
-# DEPRECATED README
+# Delete Duplicates
 
 The aim of this program is to delete all the duplicated images in a directory and its subdirectories.
 
-# Requirements
+## Requirements
 
-This program was coded using Python3.7.9.  
-Required python modules are specified in `requirements.txt`.
+This program was coded using `Python3.7.9`.
 
-# Usage
+Installation :
+
+```
+python -m venv venv
+source venv/Scripts/activate
+pip install -r requirements.txt
+```
+
+## Usage
 
 You have to specify some parameters in settings.txt :
 - ROOT_DIRECTORY : folder where your images are stored.
@@ -23,16 +26,17 @@ To run the program, type :
 python MoveDuplicates.py
 ```
 
-The program works in 4 steps:
+The program works in 4 steps :
+
 - First, list all the images in ROOT_DIRECTORY to process
 - Second, compare the images and find duplicates
 - Then, show every duplicate and wait for user confirmation for removal
 - Last, move all duplicates to BIN_DIR
 
 <ins>Note</ins>: for the moment the program is not able to efficiently detect images duplicated 3 or more times.
-It must be runned multiple times to work properly.
+It must be runned multiple times to detect all duplicates properly.
 
-# Build executable
+## Build executable
 
 ```
 pyinstaller --onefile MoveDuplicates.py && cp settings.txt dist/settings.txt
