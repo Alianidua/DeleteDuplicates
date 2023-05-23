@@ -230,7 +230,7 @@ if __name__ == "__main__":
             nb_images = {ext: {} for ext in IMAGE_EXTENSIONS}
             videos = {ext: {} for ext in VIDEO_EXTENSIONS}
             nb_videos = {ext: {} for ext in VIDEO_EXTENSIONS}
-            logs("Listing images and videos files...")
+            logs("Listing images and videos...")
             list_files(directory=ROOT_DIR)
             # Count files
             count_files()

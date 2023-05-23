@@ -8,7 +8,7 @@ This program was coded using `Python3.7.9`.
 
 Installation :
 
-```
+```bash
 python -m venv venv
 source venv/Scripts/activate
 pip install -r requirements.txt
@@ -21,8 +21,9 @@ You have to specify some parameters in settings.txt :
 - BIN_DIRECTORY : folder where you want to put the duplicates. The directory should not exist or should be empty.
 If no path is specified, the images are not moved.
 
-To run the program, type :
-```
+To run the program :
+
+```bash
 python MoveDuplicates.py
 ```
 
@@ -38,12 +39,12 @@ It must be runned multiple times to detect all duplicates properly.
 
 ## Build executable
 
-```
+```bash
 pyinstaller --onefile MoveDuplicates.py && cp settings.txt dist/settings.txt
 ```
 
 Run executable without closing child process :
 
-```
+```bash
 cmd.exe /k cmd /c MoveDuplicates.exe
 ```
