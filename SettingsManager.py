@@ -18,7 +18,7 @@ class SettingsManager:
         # Tkinter root
         tk_root = tk.Tk()
         tk_root.wm_title("Duplicates Remover - Settings")
-        tk_root.geometry("810x200")
+        tk_root.geometry("1000x200")
         self.tk_root = tk_root
         labels_shape = (35, 2)
         entries_width = 70

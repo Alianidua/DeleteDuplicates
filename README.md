@@ -1,6 +1,6 @@
 # Delete Duplicates
 
-The aim of this program is to delete all the duplicated images in a directory and its subdirectories.
+The aim of this program is to delete all the duplicated images and videos in a directory and its subdirectories.
 
 ## Developer manual
 

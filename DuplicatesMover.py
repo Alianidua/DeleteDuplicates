@@ -7,9 +7,19 @@ from Utils import logs
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
+bPx, wPx = (0, 0, 0), (255, 255, 255)
+mediaCouldNotBeLoaded = (
+    tuple(wPx for _ in range(20)),
+    (wPx, bPx, bPx, wPx, bPx, bPx, bPx, wPx, bPx, bPx, bPx, wPx, bPx, bPx, bPx, wPx, bPx, bPx, bPx, wPx),
+    (wPx, bPx, wPx, wPx, bPx, wPx, bPx, wPx, bPx, wPx, bPx, wPx, bPx, wPx, bPx, wPx, bPx, wPx, bPx, wPx),
+    (wPx, bPx, bPx, wPx, bPx, bPx, bPx, wPx, bPx, bPx, bPx, wPx, bPx, wPx, bPx, wPx, bPx, bPx, bPx, wPx),
+    (wPx, bPx, wPx, wPx, bPx, bPx, wPx, wPx, bPx, bPx, wPx, wPx, bPx, wPx, bPx, wPx, bPx, bPx, wPx, wPx),
+    (wPx, bPx, bPx, wPx, bPx, wPx, bPx, wPx, bPx, wPx, bPx, wPx, bPx, bPx, bPx, wPx, bPx, wPx, bPx, wPx),
+    tuple(wPx for _ in range(20))
+)
 
 class DuplicatesMover:
-    """Display duplicates, wait for user confirmation to move the newest duplicate in BIN_DIR"""
+    """Display duplicates, user may choose to move the more recent file/the older one/none/both into BIN_DIR"""
 
     def __init__(self, ROOT_DIR, BIN_DIR, VIDEOS_EXT, duplicates):
 
@@ -102,26 +112,7 @@ class DuplicatesMover:
         # Plt figure
         self.fig, self.ax = plt.subplots(1, 2)
         self.fig.set_size_inches(15, 15)
-        if old.split(".")[-1] in self.VIDEOS_EXT:
-            videos = (cv.VideoCapture(old), cv.VideoCapture(new))
-            old_image = cv.cvtColor(videos[0].read()[1], cv.COLOR_BGR2RGB)
-            new_image = cv.cvtColor(videos[1].read()[1], cv.COLOR_BGR2RGB)
-            old_title = f"Oldest video\n{old[self.root_dir_len:]}\n{old_date}"
-            new_title = f"Newest video\n{new[self.root_dir_len:]}\n{new_date}"
-            videos[0].release(), videos[1].release()
-        else:
-            old_image = Image.open(old)
-            old_image.draft("RGB", (old_image.size[0] // 64, old_image.size[1] // 64))
-            new_image = Image.open(new)
-            new_image.draft("RGB", (new_image.size[0] // 64, new_image.size[1] // 64))
-            old_title = f"Oldest image\n{old[self.root_dir_len:]}\n{old_date}"
-            new_title = f"Newest image\n{new[self.root_dir_len:]}\n{new_date}"
-        # Update plot
-        self.ax_old = self.ax[0].imshow(old_image)
-        self.ax_new = self.ax[1].imshow(new_image)
-        self.ax[0].set_title(old_title, fontsize=10)
-        self.ax[1].set_title(new_title, fontsize=10)
-        plt.suptitle(f"Duplicates {self.i + 1}/{self.duplicates_len}", y=0.9)
+        self.load_images(old, new, old_date, new_date)
         # Tkinter
         fig_canvas = FigureCanvasTkAgg(self.fig, master=self.tk_root)
         fig_canvas.get_tk_widget().pack(side=tk.TOP)
@@ -130,6 +121,53 @@ class DuplicatesMover:
     def delete_window_event():
         logs("Window closed. Program exiting 2...")
         sys.exit(2)
+    
+    def load_images(self, old, new, old_date, new_date):
+        oldOpened, newOpened = False, False
+        old_image, new_image = mediaCouldNotBeLoaded, mediaCouldNotBeLoaded
+        if old.split(".")[-1] in self.VIDEOS_EXT:
+            old_title = f"Oldest video\n{old[self.root_dir_len:]}\n{old_date}"
+            new_title = f"Newest video\n{new[self.root_dir_len:]}\n{new_date}"
+            videos = (cv.VideoCapture(old), cv.VideoCapture(new))
+            try:
+                old_image = cv.cvtColor(videos[0].read()[1], cv.COLOR_BGR2RGB)
+            except Exception as e:
+                logs(e)
+                logs(f"Failed to load {old}")
+            try:
+                new_image = cv.cvtColor(videos[1].read()[1], cv.COLOR_BGR2RGB)
+            except Exception as e:
+                logs(e)
+                logs(f"Failed to load {new}")
+            videos[0].release(), videos[1].release()
+        else:
+            old_title = f"Oldest image\n{old[self.root_dir_len:]}\n{old_date}"
+            new_title = f"Newest image\n{new[self.root_dir_len:]}\n{new_date}"
+            try:
+                old_image = Image.open(old)
+                oldOpened = True
+                old_image.draft("RGB", (old_image.size[0] // 64, old_image.size[1] // 64))
+            except Exception as e:
+                logs(e)
+                logs(f"Failed to load {old}")
+            try:
+                new_image = Image.open(new)
+                newOpened = True
+                new_image.draft("RGB", (new_image.size[0] // 64, new_image.size[1] // 64))
+            except Exception as e:
+                logs(e)
+                logs(f"Failed to load {new}")
+        # Update plots
+        self.ax_old = self.ax[0].imshow(old_image)
+        self.ax_new = self.ax[1].imshow(new_image)
+        self.ax[0].set_title(old_title, fontsize=10)
+        self.ax[1].set_title(new_title, fontsize=10)
+        plt.suptitle(f"Duplicates {self.i + 1}/{self.duplicates_len}", y=0.9)
+        # Close Pillow images
+        if oldOpened:
+            old_image.close()
+        if newOpened:
+            new_image.close()
 
     def display_new_images(self):
         files = self.duplicates[self.i]
@@ -149,28 +187,7 @@ class DuplicatesMover:
             self.confirm = False
             self.button_confirm.configure(bg="red")
         # Load images
-        if (
-            old.split(".")[-1] in self.VIDEOS_EXT
-        ):  # Show first frame of videos for first time
-            videos = (cv.VideoCapture(old), cv.VideoCapture(new))
-            old_image = cv.cvtColor(videos[0].read()[1], cv.COLOR_BGR2RGB)
-            new_image = cv.cvtColor(videos[1].read()[1], cv.COLOR_BGR2RGB)
-            old_title = f"Oldest video\n{old[self.root_dir_len:]}\n{old_date}"
-            new_title = f"Newest video\n{new[self.root_dir_len:]}\n{new_date}"
-            videos[0].release(), videos[1].release()
-        else:  # Show images for first time
-            old_image = Image.open(old)
-            old_image.draft("RGB", (old_image.size[0] // 64, old_image.size[1] // 64))
-            new_image = Image.open(new)
-            new_image.draft("RGB", (new_image.size[0] // 64, new_image.size[1] // 64))
-            old_title = f"Oldest image\n{old[self.root_dir_len:]}\n{old_date}"
-            new_title = f"Newest image\n{new[self.root_dir_len:]}\n{new_date}"
-        # Update plot
-        self.ax_old.set_data(old_image)
-        self.ax_new.set_data(new_image)
-        self.ax[0].set_title(old_title, fontsize=10)
-        self.ax[1].set_title(new_title, fontsize=10)
-        plt.suptitle(f"Duplicates {self.i + 1}/{self.duplicates_len}", y=0.9)
+        self.load_images(old, new, old_date, new_date)
         # Flush
         self.fig.canvas.draw()
         self.fig.canvas.flush_events()
@@ -232,7 +249,7 @@ class DuplicatesMover:
 
     def window_loop(self):
         # Start tkinter loop
-        logs(f"Detected {self.duplicates_len} duplicated files. ")
+        logs(f"Detected {self.duplicates_len} potentially duplicated files. ")
         self.tk_root.mainloop()
         # Move images
         self.move_images()
