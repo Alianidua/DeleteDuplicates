@@ -24,7 +24,7 @@ python MoveDuplicates.py
 ### Build executable
 
 ```bash
-pyinstaller --onefile MoveDuplicates.py && cp settings.txt dist/settings.txt
+pyinstaller --onefile MoveDuplicates.py
 ```
 
 Run executable without closing child process :
