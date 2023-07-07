@@ -100,14 +100,14 @@ def count_files():
 # Load image
 def load_image_pixels(im_path, draft_shape, locations, queue_cache, im_index):
     if not queue_cache[im_index]:
-        # Load image for first time
+        # Load image for the first time
         im = Image.open(im_path)
         im.draft("RGB", draft_shape)
+        pixel_data = im.load()
         queue_cache[im_index] = tuple(
-            im.getpixel(coordinates) for coordinates in locations
+            pixel_data[coordinates] for coordinates in locations
         )
     return queue_cache[im_index]
-
 
 # Main loop; iterate on every images
 DuplicatesInfo = recordclass(
@@ -211,7 +211,6 @@ if __name__ == "__main__":
 
     try:
         while True:
-            t_start = time.time()
             # Clear variables
             total_images = 0
             total_videos = 0
@@ -231,6 +230,7 @@ if __name__ == "__main__":
             videos = {ext: {} for ext in VIDEO_EXTENSIONS}
             nb_videos = {ext: {} for ext in VIDEO_EXTENSIONS}
             logs("Listing images and videos...")
+            t_start = time.time()
             list_files(directory=ROOT_DIR)
             # Count files
             count_files()
