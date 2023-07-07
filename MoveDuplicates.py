@@ -96,26 +96,7 @@ def count_files():
     logs(total_images, "potential duplicated images.")
     logs(total_videos, "potential duplicated videos.\n")
 
-
-# Load image
-def load_image_pixels(im_path, draft_shape, locations, queue_cache, im_index):
-    if not queue_cache[im_index]:
-        # Load image for the first time
-        im = Image.open(im_path)
-        im.draft("RGB", draft_shape)
-        pixel_data = im.load()
-        queue_cache[im_index] = tuple(
-            pixel_data[coordinates] for coordinates in locations
-        )
-    return queue_cache[im_index]
-
-# Main loop; iterate on every images
-DuplicatesInfo = recordclass(
-    "DuplicatesInfo", ["old", "new", "old_date", "new_date", "remove_old", "remove_new"]
-)
-duplicates = list()
-
-
+# Compare 2 images dates
 def compare_dates(p1, p2):
     old, new = p1, p2
     old_date = round(os.path.getmtime(old))
@@ -130,28 +111,54 @@ def compare_dates(p1, p2):
         dt.datetime.fromtimestamp(new_date),
     )
 
+# Load image
+def load_image_pixels(im_path, draft_shape, listLocations, queue_cache, im_index):
+    if not queue_cache[im_index]:
+        # Load image for the first time
+        im = Image.open(im_path)
+        im.draft("RGB", draft_shape)
+        pixel_data = im.load()
+        queue_cache[im_index] = tuple(
+            tuple(
+                pixel_data[coordinates] for coordinates in locations
+            )
+            for locations in listLocations
+        )
+    return queue_cache[im_index]
 
+# Main loop; iterate on every images
+DuplicatesInfo = recordclass(
+    "DuplicatesInfo", ["old", "new", "old_date", "new_date", "remove_old", "remove_new"]
+)
+duplicates = list()
+
+positionsFactors = [0, .25, .5, .75, 1]
 def iterate_queue(queue, queue_cache, ext, shape, i, percentage):
     # Compute pixels positions to use for comparison
     draft_shape = (shape[0] // 16, shape[1] // 16)
-    locations = [
-        (draft_shape[0] // i, draft_shape[1] // j)
-        for i in [1, 1.25, 2, 2.75, 3]
-        for j in [1, 1.25, 2, 2.75, 3]
+    listLocations = [
+        tuple(
+            (int(draft_shape[0] * i), int(draft_shape[1] * j))
+            for i in positionsFactors
+            for j in positionsFactors
+        )
     ]
 
     im1_index = nb_images[ext][shape] - 1
     while queue:
         # Compute new image values
         im1_path = queue.pop()
-        im1_pixels = load_image_pixels(
-            im1_path, draft_shape, locations, queue_cache, im1_index
-        )
+        if queue_cache[im1_index]:
+            im1_pixels = queue_cache[im1_index][0]
+        else:
+            im1_pixels = load_image_pixels(
+                im1_path, draft_shape, listLocations, queue_cache, im1_index
+            )[0]
         # Compare with other images
         for im2_index in range(im1_index):
             im2_path = queue[im2_index]
-            if im1_pixels == load_image_pixels(
-                im2_path, draft_shape, locations, queue_cache, im2_index
+            if im1_pixels in load_image_pixels(
+                im2_path, draft_shape, listLocations, queue_cache, im2_index
             ):
                 old, new, old_date, new_date = compare_dates(im1_path, im2_path)
                 duplicates.append(
