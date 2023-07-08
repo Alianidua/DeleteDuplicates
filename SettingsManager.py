@@ -117,7 +117,7 @@ class SettingsManager:
 
     @staticmethod
     def delete_window_event():
-        logs("Settings window closed. Program exiting 2...")
+        logs("Settings window closed ; program exiting 0")
         sys.exit(2)
 
     def replace_root_dir(self):
@@ -167,7 +167,7 @@ class SettingsManager:
                     f"Warning : the following directory already exists and is not empty : {BIN_DIR} \nSome files in this directory may be overwritten"
                 )
         else:
-            logs("No BIN_DIR specified. The duplicates will not be removed.")
+            logs("No BIN_DIR specified ; the duplicates will not be removed")
         # Set settings values
         self.ROOT_DIR = ROOT_DIR
         self.BIN_DIR = BIN_DIR
@@ -204,7 +204,7 @@ class SettingsManager:
 
     def load_default_settings(self):
         if not os.path.exists(self.settings):
-            logs("No default settings.")
+            logs("No default settings")
             return
         try:
             with open(self.settings, encoding="utf-8") as settings:
