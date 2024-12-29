@@ -2,8 +2,10 @@ venv
 test
 .idea
 **/__pycache__/
+
 benchmark.py
 test.py
 build/
 MoveDuplicates.spec
 dist/
+settings.txt

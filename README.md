@@ -4,7 +4,7 @@ The aim of this program is to delete all the duplicated images and videos in a d
 
 ## Developer manual
 
-This program was coded using `Python3.7.9`.
+This program was coded using [Python 3.7.9](https://www.python.org/downloads/release/python-379/).
 
 ### Install and run the program
 
@@ -59,32 +59,32 @@ It must be runned multiple times to detect all duplicates properly.
 
 ### How to use this program
 
-#### Before starting
+#### 1. Before starting
 
-You may need to disable your antivirus and/or run the executable as Administrator. I did this free, open source program for fun and for educational purposes. So I am not committed enough in this program to pay in order to whitelist it.
+You may need to disable your antivirus and/or run the executable as Administrator.
 
-#### The settings window
+#### 2. The settings window
 
-When running the executable, it will open the settings windows and a CMD prompt :
+Running the executable will open the settings windows and a CMD prompt :
 
 ![settings](doc/images/Settings.png)
 ![terminal](doc/images/Terminal.png)
 
-Keep an eye on the terminal as it will show a lot of interesting information !
+Keep an eye on the terminal as it will show a lot of interesting information.
 
 Here is the list of settings you have to specify :
 
-- `ROOT_DIRECTORY` : folder where your potential duplicates are stored
-- `BIN_DIRECTORY` : folder where you want to put the duplicates ; the directory should not exist or should be empty ; if leaved empty, the duplicates will not be moved
+- `ROOT_DIRECTORY` : path to the folder to scan
+- `BIN_DIRECTORY` : path where the duplicates will be moved ; the directory should not exist or should be empty ; if not specified, the duplicates will not be moved at all
 - `IMAGE_FORMATS` : comma-separated list of image extensions you want to detect
 - `VIDEO_FORMATS` : comma-separated list of video extensions you want to detect
 - `PROGRESSION_FREQUENCY`: how often you want the program to show its progression when it is comparing the files ; *0.01* means it will report its progression every 1%
 
 You can click the button **Set as default** to register your configuration in your `settings.txt`. If you do so, the next time you run the program, it will load this configuration.
 
-When you have modified the settings, you can click the **Confirm** button.
+When you are ready to start the scan, you can click the **Confirm** button.
 
-#### The validation window
+#### 3. The validation window
 
 The settings window will close. The program will find and compare all the images and videos in the specified folder. The comparaison algorithm is very simple, so it may result in false-positives.
 
@@ -98,4 +98,4 @@ Please, ensure you review all the potential duplicates before clicking the **Con
 
 #### The program ends
 
-Once you have confirmed your selection, the images are moved into `BIN_DIRECTORY`.
+Once you have confirmed your selection, the duplicates are moved into the `BIN_DIRECTORY`.
