@@ -1,10 +1,11 @@
 import time
 import cv2 as cv
+import numpy as np
 from PIL import Image
 
 
 bPx, wPx = (0, 0, 0), (255, 255, 255)
-mediaCouldNotBeLoaded = (
+mediaCouldNotBeLoaded = np.asarray((
   tuple(wPx for _ in range(20)),
   (wPx, bPx, bPx, wPx, bPx, bPx, bPx, wPx, bPx, bPx, bPx, wPx, bPx, bPx, bPx, wPx, bPx, bPx, bPx, wPx),
   (wPx, bPx, wPx, wPx, bPx, wPx, bPx, wPx, bPx, wPx, bPx, wPx, bPx, wPx, bPx, wPx, bPx, wPx, bPx, wPx),
@@ -12,7 +13,7 @@ mediaCouldNotBeLoaded = (
   (wPx, bPx, wPx, wPx, bPx, bPx, wPx, wPx, bPx, bPx, wPx, wPx, bPx, wPx, bPx, wPx, bPx, bPx, wPx, wPx),
   (wPx, bPx, bPx, wPx, bPx, wPx, bPx, wPx, bPx, wPx, bPx, wPx, bPx, bPx, bPx, wPx, bPx, wPx, bPx, wPx),
   tuple(wPx for _ in range(20))
-)
+))
 
 def is_out_of_range(maxVal, radius, a, b):
   if a >= b:
@@ -83,4 +84,4 @@ class ImageLoader:
         new_image.draft("RGB", (new_image.size[0] // 64, new_image.size[1] // 64))
       except:
         pass
-    return old_image, old_title, new_image, new_title
+    return np.asarray(old_image), np.asarray(old_title), np.asarray(new_image), np.asarray(new_title)

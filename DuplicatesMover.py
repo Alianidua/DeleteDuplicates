@@ -1,5 +1,6 @@
 import os
 import sys
+import numpy as np
 import tkinter as tk
 from ImageLoader import ImageLoader
 from Utils import logs
@@ -99,6 +100,9 @@ class DuplicatesMover:
     # Plt figure
     self.fig, self.ax = plt.subplots(1, 2)
     self.fig.set_size_inches(15, 15)
+    self.old_image = self.ax[0].imshow(np.zeros((1, 1)), animated=True)
+    self.new_image = self.ax[1].imshow(np.zeros((1, 1)), animated=True)
+
     # Tkinter
     fig_canvas = FigureCanvasTkAgg(self.fig, master=self.tk_root)
     fig_canvas.get_tk_widget().pack(side=tk.TOP)
@@ -117,10 +121,8 @@ class DuplicatesMover:
         old_image, old_title, new_image, new_title = self.image_dict[image_i]
         self.current_showed_i = self.i.value
         # Update plots
-        self.ax[0].clear()
-        self.ax[1].clear()
-        self.ax[0].imshow(old_image)
-        self.ax[1].imshow(new_image)
+        self.old_image.set_data(old_image)
+        self.new_image.set_data(new_image)
         self.ax[0].set_title(old_title, fontsize=10)
         self.ax[1].set_title(new_title, fontsize=10)
         plt.suptitle(f"Duplicates {self.i.value + 1}/{self.duplicates_len}", y=0.9)
