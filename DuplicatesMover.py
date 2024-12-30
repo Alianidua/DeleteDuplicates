@@ -1,35 +1,34 @@
 import os
 import sys
-import cv2 as cv
 import tkinter as tk
-from PIL import Image
+from ImageLoader import ImageLoader
 from Utils import logs
+import multiprocessing
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
-bPx, wPx = (0, 0, 0), (255, 255, 255)
-mediaCouldNotBeLoaded = (
-  tuple(wPx for _ in range(20)),
-  (wPx, bPx, bPx, wPx, bPx, bPx, bPx, wPx, bPx, bPx, bPx, wPx, bPx, bPx, bPx, wPx, bPx, bPx, bPx, wPx),
-  (wPx, bPx, wPx, wPx, bPx, wPx, bPx, wPx, bPx, wPx, bPx, wPx, bPx, wPx, bPx, wPx, bPx, wPx, bPx, wPx),
-  (wPx, bPx, bPx, wPx, bPx, bPx, bPx, wPx, bPx, bPx, bPx, wPx, bPx, wPx, bPx, wPx, bPx, bPx, bPx, wPx),
-  (wPx, bPx, wPx, wPx, bPx, bPx, wPx, wPx, bPx, bPx, wPx, wPx, bPx, wPx, bPx, wPx, bPx, bPx, wPx, wPx),
-  (wPx, bPx, bPx, wPx, bPx, wPx, bPx, wPx, bPx, wPx, bPx, wPx, bPx, bPx, bPx, wPx, bPx, wPx, bPx, wPx),
-  tuple(wPx for _ in range(20))
-)
 
 class DuplicatesMover:
   """Display duplicates, user may choose to move the more recent file/the older one/none/both into BIN_DIR"""
 
-  def __init__(self, ROOT_DIR, BIN_DIR, VIDEOS_EXT, duplicates):
-
+  def __init__(self, ROOT_DIR, BIN_DIR, VIDEO_EXT, duplicates):
     self.ROOT_DIR = ROOT_DIR
     self.BIN_DIR = BIN_DIR
-    self.VIDEOS_EXT = VIDEOS_EXT
+    self.VIDEO_EXT = VIDEO_EXT
     self.duplicates = duplicates
     self.duplicates_len = len(duplicates)
     self.root_dir_len = len(ROOT_DIR) + 1
-    self.i = 0
+    self.i = multiprocessing.Value('i', 0)
+    self.current_showed_i = -1
+
+    # Start subprocess that images
+    self.image_dict = multiprocessing.Manager().dict()
+    self.p = multiprocessing.Process(
+      target=ImageLoader,
+      args=(VIDEO_EXT, ROOT_DIR, duplicates, self.image_dict, self.i)
+    )
+    self.p.daemon = True
+    self.p.start()
 
     # Configure tkinter root
     tk_root = tk.Tk()
@@ -77,18 +76,18 @@ class DuplicatesMover:
     tk_root.bind("<KeyPress-space>", self.check_new_image_keybind_event)
     # Button previous
     button_prev = tk.Button(
-      buttons_frame, text="Prev", width=6, bg="#DCDCDC", command=self.prev_event
+      buttons_frame, text="Prev", width=6, bg="#DCDCDC", command=lambda:self.move_event(-1)
     )
     button_prev.pack(side=tk.LEFT)
     button_prev["font"] = font
-    tk_root.bind("<Left>", self.prev_event)
+    tk_root.bind("<Left>", lambda event: self.move_event(-1))
     # Button next
     button_next = tk.Button(
-      buttons_frame, text="Next", width=6, bg="#DCDCDC", command=self.next_event
+      buttons_frame, text="Next", width=6, bg="#DCDCDC", command=lambda:self.move_event(1)
     )
     button_next.pack()
     button_next["font"] = font
-    tk_root.bind("<Right>", self.next_event)
+    tk_root.bind("<Right>", lambda event: self.move_event(1))
     # Button
     self.confirm = False
     self.button_confirm = tk.Button(
@@ -98,125 +97,61 @@ class DuplicatesMover:
     self.button_confirm["font"] = font
     # Images to display
     self.ax, self.fig = None, None
-    self.ax_old, self.ax_new = None, None
 
-    # First display
-    files = self.duplicates[self.i]
-    # Compare creation dates
-    old, new, old_date, new_date = (
-      files.old,
-      files.new,
-      files.old_date,
-      files.new_date,
-    )
     # Plt figure
     self.fig, self.ax = plt.subplots(1, 2)
     self.fig.set_size_inches(15, 15)
-    self.load_images(old, new, old_date, new_date)
     # Tkinter
     fig_canvas = FigureCanvasTkAgg(self.fig, master=self.tk_root)
     fig_canvas.get_tk_widget().pack(side=tk.TOP)
 
-  @staticmethod
-  def delete_window_event():
-    logs("Window closed ; program exiting 0")
-    sys.exit(2)
-  
-  def load_images(self, old, new, old_date, new_date):
-    oldOpened, newOpened = False, False
-    old_image, new_image = mediaCouldNotBeLoaded, mediaCouldNotBeLoaded
-    if old.split(".")[-1] in self.VIDEOS_EXT:
-      old_title = f"Oldest video\n{old[self.root_dir_len:]}\n{old_date}"
-      new_title = f"Newest video\n{new[self.root_dir_len:]}\n{new_date}"
-      videos = (cv.VideoCapture(old), cv.VideoCapture(new))
-      try:
-        old_image = cv.cvtColor(videos[0].read()[1], cv.COLOR_BGR2RGB)
-      except Exception as e:
-        logs(e)
-        logs(f"Failed to load {old}")
-      try:
-        new_image = cv.cvtColor(videos[1].read()[1], cv.COLOR_BGR2RGB)
-      except Exception as e:
-        logs(e)
-        logs(f"Failed to load {new}")
-      videos[0].release(), videos[1].release()
-    else:
-      old_title = f"Oldest image\n{old[self.root_dir_len:]}\n{old_date}"
-      new_title = f"Newest image\n{new[self.root_dir_len:]}\n{new_date}"
-      try:
-        old_image = Image.open(old)
-        oldOpened = True
-        old_image.draft("RGB", (old_image.size[0] // 64, old_image.size[1] // 64))
-      except Exception as e:
-        logs(e)
-        logs(f"Failed to load {old}")
-      try:
-        new_image = Image.open(new)
-        newOpened = True
-        new_image.draft("RGB", (new_image.size[0] // 64, new_image.size[1] // 64))
-      except Exception as e:
-        logs(e)
-        logs(f"Failed to load {new}")
-    # Update plots
-    self.ax_old = self.ax[0].imshow(old_image)
-    self.ax_new = self.ax[1].imshow(new_image)
-    self.ax[0].set_title(old_title, fontsize=10)
-    self.ax[1].set_title(new_title, fontsize=10)
-    plt.suptitle(f"Duplicates {self.i + 1}/{self.duplicates_len}", y=0.9)
-    # Close Pillow images
-    if oldOpened:
-      old_image.close()
-    if newOpened:
-      new_image.close()
+    # Start checks for images
+    self.check_for_images()
 
-  def display_new_images(self):
-    files = self.duplicates[self.i]
-    # Compare creation dates
-    old, new, old_date, new_date, remove_old, remove_new = (
-      files.old,
-      files.new,
-      files.old_date,
-      files.new_date,
-      files.remove_old,
-      files.remove_new,
-    )
-    # Update buttons value
-    self.remove_old.set(remove_old)
-    self.remove_new.set(remove_new)
-    if self.confirm:
-      self.confirm = False
-      self.button_confirm.configure(bg="red")
-    # Load images
-    self.load_images(old, new, old_date, new_date)
-    # Flush
-    self.fig.canvas.draw()
-    self.fig.canvas.flush_events()
+  def check_for_images(self):
+    # Check if current image have been loaded by the background process
+    if self.current_showed_i != self.i.value:
+      print("Looking for right image...", self.i.value)
+      for image_i in self.image_dict.keys():
+        print(image_i)
+        if image_i != self.i.value:
+          continue
+        old_image, old_title, new_image, new_title = self.image_dict[image_i]
+        self.current_showed_i = self.i.value
+        # Update plots
+        self.ax[0].imshow(old_image)
+        self.ax[1].imshow(new_image)
+        self.ax[0].set_title(old_title, fontsize=10)
+        self.ax[1].set_title(new_title, fontsize=10)
+        plt.suptitle(f"Duplicates {self.i.value + 1}/{self.duplicates_len}", y=0.9)
+        # Flush
+        self.fig.canvas.draw()
+        self.fig.canvas.flush_events()
+    # Schedule the next check
+    self.tk_root.after(1, self.check_for_images)
 
   def check_old_image_event(self):
-    self.duplicates[self.i].remove_old = self.remove_old.get()
+    self.duplicates[self.i.value].remove_old = self.remove_old.get()
 
   def check_new_image_event(self):
-    self.duplicates[self.i].remove_new = self.remove_new.get()
+    self.duplicates[self.i.value].remove_new = self.remove_new.get()
 
   def check_old_image_keybind_event(self, event):
     self.remove_old.set(not self.remove_old.get())
-    self.duplicates[self.i].remove_old = self.remove_old.get()
+    self.duplicates[self.i.value].remove_old = self.remove_old.get()
 
   def check_new_image_keybind_event(self, event):
     self.remove_new.set(not self.remove_new.get())
-    self.duplicates[self.i].remove_new = self.remove_new.get()
+    self.duplicates[self.i.value].remove_new = self.remove_new.get()
 
-  def prev_event(self, *args):
-    self.i -= 1
-    if self.i < 0:
-      self.i = self.duplicates_len - 1
-    self.display_new_images()
-
-  def next_event(self, *args):
-    self.i += 1
-    if self.i >= self.duplicates_len:
-      self.i = 0
-    self.display_new_images()
+  def move_event(self, i):
+    with self.i.get_lock():  # Ensure safe access to the shared value
+      self.i.value = (self.i.value + i) % self.duplicates_len
+    self.remove_old.set(self.duplicates[self.i.value][4])
+    self.remove_new.set(self.duplicates[self.i.value][5])
+    if self.confirm:
+      self.confirm = False
+      self.button_confirm.configure(bg="red")
 
   def confirm_event(self):
     if self.confirm:
@@ -225,6 +160,11 @@ class DuplicatesMover:
     else:
       self.confirm = True
       self.button_confirm.configure(bg="lime green")
+
+  @staticmethod
+  def delete_window_event():
+    logs("Window closed ; program exiting 2")
+    sys.exit(2)
 
   def move_images(self):
     to_remove = [files.new for files in self.duplicates if files.remove_new] + [
