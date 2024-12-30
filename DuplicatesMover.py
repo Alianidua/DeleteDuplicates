@@ -111,9 +111,7 @@ class DuplicatesMover:
   def check_for_images(self):
     # Check if current image have been loaded by the background process
     if self.current_showed_i != self.i.value:
-      print("Looking for right image...", self.i.value)
       for image_i in self.image_dict.keys():
-        print(image_i)
         if image_i != self.i.value:
           continue
         old_image, old_title, new_image, new_title = self.image_dict[image_i]
@@ -128,7 +126,7 @@ class DuplicatesMover:
         self.fig.canvas.draw()
         self.fig.canvas.flush_events()
     # Schedule the next check
-    self.tk_root.after(1, self.check_for_images)
+    self.tk_root.after(500, self.check_for_images)
 
   def check_old_image_event(self):
     self.duplicates[self.i.value].remove_old = self.remove_old.get()
