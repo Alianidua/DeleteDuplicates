@@ -113,8 +113,6 @@ class DuplicatesMover:
   def check_for_images(self):
     # Check if current image have been loaded by the background process
     if self.current_showed_i != self.i.value:
-      import time
-      a = time.time()
       for image_i in self.image_dict.keys():
         if image_i != self.i.value:
           continue
@@ -127,10 +125,7 @@ class DuplicatesMover:
         self.ax[1].set_title(new_title, fontsize=10)
         plt.suptitle(f"Duplicates {self.i.value + 1}/{self.duplicates_len}", y=0.9)
         # Flush
-        self.fig.canvas.draw()
-        self.fig.canvas.flush_events()
-        b = time.time()
-        print("Time :", b - a)
+        plt.draw()
     # Schedule the next check
     self.tk_root.after(100, self.check_for_images)
 

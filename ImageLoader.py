@@ -21,7 +21,7 @@ def is_out_of_range(maxVal, radius, a, b):
   return min(b - a, a + maxVal - b) > radius
 
 class ImageLoader:
-  def __init__(self, VIDEO_EXT, ROOT_DIR, duplicates, image_dict, index, r=2):
+  def __init__(self, VIDEO_EXT, ROOT_DIR, duplicates, image_dict, index, r=5):
 
     # Multiprocessing components
     self.image_dict = image_dict
