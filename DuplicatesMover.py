@@ -95,8 +95,6 @@ class DuplicatesMover:
     )
     self.button_confirm.pack(side=tk.RIGHT, padx=100)
     self.button_confirm["font"] = font
-    # Images to display
-    self.ax, self.fig = None, None
 
     # Plt figure
     self.fig, self.ax = plt.subplots(1, 2)
@@ -111,12 +109,16 @@ class DuplicatesMover:
   def check_for_images(self):
     # Check if current image have been loaded by the background process
     if self.current_showed_i != self.i.value:
+      import time
+      a = time.time()
       for image_i in self.image_dict.keys():
         if image_i != self.i.value:
           continue
         old_image, old_title, new_image, new_title = self.image_dict[image_i]
         self.current_showed_i = self.i.value
         # Update plots
+        self.ax[0].clear()
+        self.ax[1].clear()
         self.ax[0].imshow(old_image)
         self.ax[1].imshow(new_image)
         self.ax[0].set_title(old_title, fontsize=10)
@@ -125,8 +127,10 @@ class DuplicatesMover:
         # Flush
         self.fig.canvas.draw()
         self.fig.canvas.flush_events()
+        b = time.time()
+        print("Time :", b - a)
     # Schedule the next check
-    self.tk_root.after(500, self.check_for_images)
+    self.tk_root.after(100, self.check_for_images)
 
   def check_old_image_event(self):
     self.duplicates[self.i.value].remove_old = self.remove_old.get()
