@@ -30,33 +30,36 @@ class ImageLoader:
     self.duplicates_len = len(duplicates)
     self.root_dir_len = len(ROOT_DIR) + 1
     self.index = index
+    self.last_index = -1
     self.r = r
 
     with open("output.txt", "w") as f:
       f.write("Starting subprocess\n")
       while True:
         index = self.index.value
-        f.write(f"New Loop\n")
-        for out_of_range in [x for x in self.image_dict.keys() if is_out_of_range(self.duplicates_len, self.r, index, x)]:
-          f.write(f"Removing {out_of_range} because current index is {index}\n")
-          self.image_dict.pop(out_of_range)
-        for i in range(index - self.r, index + self.r + 1):
-          i = i % self.duplicates_len
-          if i not in self.image_dict:
-            f.write(f"Adding {i}\n")
-            files = self.duplicates[index]
-            old, new, old_date, new_date, remove_old, remove_new = (
-              files.old,
-              files.new,
-              files.old_date,
-              files.new_date,
-              files.remove_old,
-              files.remove_new,
-            )
-            old_image, old_title, new_image, new_title = self.load_images(old, new, old_date, new_date)
-            self.image_dict[i] = (old_image, old_title, new_image, new_title)
-            f.write(f"{(old_image, old_title, new_image, new_title)}\n")
-        f.write(f"Current state: {self.image_dict.keys()}\n")
+        if index != self.last_index:
+          f.write(f"New Loop\n")
+          for out_of_range in [x for x in self.image_dict.keys() if is_out_of_range(self.duplicates_len, self.r, index, x)]:
+            f.write(f"Removing {out_of_range} because current index is {index}\n")
+            self.image_dict.pop(out_of_range)
+          for i in range(index - self.r, index + self.r + 1):
+            i = i % self.duplicates_len
+            if i not in self.image_dict:
+              f.write(f"Adding {i}\n")
+              files = self.duplicates[index]
+              old, new, old_date, new_date, remove_old, remove_new = (
+                files.old,
+                files.new,
+                files.old_date,
+                files.new_date,
+                files.remove_old,
+                files.remove_new,
+              )
+              old_image, old_title, new_image, new_title = self.load_images(old, new, old_date, new_date)
+              self.image_dict[i] = (old_image, old_title, new_image, new_title)
+              f.write(f"{(old_image, old_title, new_image, new_title)}\n")
+          f.write(f"Current state: {self.image_dict.keys()}\n")
+          self.last_index = index
         time.sleep(0.5)
         f.flush()
 
