@@ -182,7 +182,7 @@ class DuplicatesMover:
 
   @staticmethod
   def delete_window_event():
-    logs("Window closed ; program exiting 2")
+    logs("Window closed; program exiting 2")
     sys.exit(2)
 
   def move_images(self):
@@ -204,7 +204,7 @@ class DuplicatesMover:
             os.remove(target_path)
           os.rename(duplicate_path, target_path)
     else:
-      logs("No BIN_DIR defined ; duplicates will not be moved")
+      logs("No BIN_DIR defined; duplicates will not be moved")
 
   def window_loop(self):
     # Start tkinter loop

@@ -23,25 +23,22 @@ VIDEO_EXTENSIONS = None  # The videos format
 PERCENTAGE = 0.05  # How frequently the program should show its progression
 
 # Return a queue with all images in root_dir
-images, nb_images, total_images = {}, {}, 0
-videos, nb_videos, total_videos = {}, {}, 0
-
 def list_files(directory=ROOT_DIR):
   global images, videos
   D = os.listdir(directory)
   for fpath in D:
-    fpath = f"{directory}/{fpath}"
     ext = fpath.split(".")[-1]
+    fpath = f"{directory}/{fpath}"
     if os.path.isdir(fpath):
       list_files(fpath)
     elif ext in IMAGE_EXTENSIONS:
       try:
         shape = get_image_size.get_image_size(fpath)
         if shape not in images[ext]:
-          images[ext][get_image_size.get_image_size(fpath)] = []
-        images[ext][get_image_size.get_image_size(fpath)].append(fpath)
+          images[ext][shape] = []
+        images[ext][shape].append(fpath)
       except Exception as e:
-        logs(f"{e}\nWARNING : something wrong happened with this file : '{fpath}' ; this file will be ignored")
+        logs(f"{e}\nWARNING : something wrong happened with this file : '{fpath}'; this file will be ignored")
     elif ext in VIDEO_EXTENSIONS:
       try:
         size = os.stat(fpath).st_size
@@ -49,8 +46,7 @@ def list_files(directory=ROOT_DIR):
           videos[ext][size] = []
         videos[ext][size].append(fpath)
       except Exception as e:
-        logs(f"{e}\nWARNING : something wrong happened with this file : '{fpath}' ; this file will be ignored")
-
+        logs(f"{e}\nWARNING : something wrong happened with this file : '{fpath}'; this file will be ignored")
 
 # Count number of images per extension and shape
 def count_files():
@@ -98,8 +94,8 @@ def count_files():
 # Compare 2 images dates
 def compare_dates(p1, p2):
   old, new = p1, p2
-  old_date = round(os.path.getmtime(old))
-  new_date = round(os.path.getmtime(new))
+  old_date = round(os.path.getctime(old))
+  new_date = round(os.path.getctime(new))
   if new_date < old_date:
     old, new = p1, p2
     old_date, new_date = new_date, old_date
@@ -151,7 +147,7 @@ def iterate_queue(queue, queue_cache, ext, shape, progression, percentage):
       percentage += PERCENTAGE
   return progression, percentage
 
-
+# Scan registered paths to detect potential duplicates
 def iterate_paths():
   logs("Iterating over all images...")
   progression, percentage = 0, 0
@@ -182,7 +178,6 @@ def iterate_paths():
           )
   logs("100 %. Done.")
 
-
 if __name__ == "__main__":
   try:
     while True:
@@ -192,13 +187,7 @@ if __name__ == "__main__":
       duplicates = list()
       # Load settings
       settings_manager = SettingsManager()
-      (
-        ROOT_DIR,
-        BIN_DIR,
-        IMAGE_EXTENSIONS,
-        VIDEO_EXTENSIONS,
-        PERCENTAGE,
-      ) = settings_manager.get_settings()
+      ROOT_DIR, BIN_DIR, IMAGE_EXTENSIONS, VIDEO_EXTENSIONS, PERCENTAGE = settings_manager.get_settings()
       # List files
       images = {ext: {} for ext in IMAGE_EXTENSIONS}
       nb_images = {ext: {} for ext in IMAGE_EXTENSIONS}
@@ -223,10 +212,8 @@ if __name__ == "__main__":
   except Exception as e:
     error_traceback = traceback.format_exc()
     logs(error_traceback)
-    messagebox.showerror(
-      "Something went wrong :( check the logs or message me", error_traceback
-    )
-    logs("Something went wrong :( check the logs or message me.")
+    messagebox.showerror("Something went wrong :(", error_traceback)
+    logs("Something went wrong :(")
     logs("Press enter twice to close terminal.")
     input()
     input()
