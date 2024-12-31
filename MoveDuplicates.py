@@ -8,6 +8,7 @@ import datetime as dt
 from PIL import Image
 Image.MAX_IMAGE_PIXELS = None
 import get_image_size
+import multiprocessing
 from Utils import logs
 from tkinter import messagebox
 from recordclass import recordclass
@@ -105,8 +106,8 @@ def compare_dates(p1, p2):
 DuplicatesInfo = recordclass(
   "DuplicatesInfo", ["old", "new", "old_date", "new_date", "remove_old", "remove_new"]
 )
-duplicates = list()
 
+# Get hash from cache, compute it if needed
 def get_image_hash(im_path, im_index, queue_cache):
   if queue_cache[im_index] is None:
     im_hash = imagehash.average_hash(Image.open(im_path))
@@ -115,8 +116,10 @@ def get_image_hash(im_path, im_index, queue_cache):
     im_hash = queue_cache[im_index]
   return im_hash
 
-def iterate_queue(queue, queue_cache, ext, shape, progression, percentage):
-  im1_index = nb_images[ext][shape] - 1
+# Detect potential duplicates images for given extension and shape
+duplicates = list()
+def iterate_queue(queue, queue_cache, im1_index, progression, percentage):
+  global duplicates
   while queue:
     # Compute new image hash and cache it
     im1_path = queue.pop()
@@ -137,7 +140,7 @@ def iterate_queue(queue, queue_cache, ext, shape, progression, percentage):
             remove_new=True,
           )
         )
-        logs("Duplicates :", im1_path, im2_path)
+        logs("Potential duplicates :", im1_path, im2_path)
         break
     # Iterate
     im1_index -= 1
@@ -147,15 +150,36 @@ def iterate_queue(queue, queue_cache, ext, shape, progression, percentage):
       percentage += PERCENTAGE
   return progression, percentage
 
-# Scan registered paths to detect potential duplicates
+# Compute all images hashes, compatible with multiprocessing
+def multiprocess_compute_hashes(queue, queue_cache):
+  while not queue.empty():
+    im_index, im_path = queue.get_nowait()
+    queue_cache[im_index] = get_image_hash(im_path, im_index, queue_cache)
+
+# Find potential duplicates in registered paths
 def iterate_paths():
   logs("Iterating over all images...")
   progression, percentage = 0, 0
   for ext in images:
     for shape in images[ext]:
       queue = images[ext][shape]
-      queue_cache = np.full((len(queue),), None, dtype=object)
-      i, percentage = iterate_queue(queue, queue_cache, ext, shape, progression, percentage)
+      if len(shape) > 1:
+        m_queue = multiprocessing.Queue()
+        for i, path in enumerate(queue):
+          m_queue.put((i, path))
+        m_queue_cache = multiprocessing.Manager().list()
+        m_queue_cache.extend([None for _ in range(len(images[ext][shape]))])
+        process = multiprocessing.Process(
+          target=multiprocess_compute_hashes,
+          args=(m_queue, m_queue_cache)
+        )
+        process.start()
+        multiprocess_compute_hashes(m_queue, m_queue_cache)
+        process.join()
+        progression, percentage = iterate_queue(queue, m_queue_cache, nb_images[ext][shape]-1, progression, percentage)
+      else:
+        queue_cache = np.full((len(queue),), None, dtype=object)
+        progression, percentage = iterate_queue(queue, queue_cache, nb_images[ext][shape]-1, progression, percentage)
   logs("100 %. Done.")
   logs("Iterating over videos...")
   for ext in videos:
@@ -214,7 +238,7 @@ if __name__ == "__main__":
     logs(error_traceback)
     messagebox.showerror("Something went wrong :(", error_traceback)
     logs("Something went wrong :(")
-    logs("Press enter twice to close terminal.")
+    logs("Press enter twice to exit.")
     input()
     input()
     sys.exit(1)

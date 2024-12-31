@@ -10,23 +10,29 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 
 mediaLoading = np.asarray((
-  tuple(wPx for _ in range(17)),
-  tuple(wPx for _ in range(17)),
-  tuple(wPx for _ in range(17)),
-  tuple(wPx for _ in range(17)),
-  tuple(wPx for _ in range(17)),
-  tuple(wPx for _ in range(17)),
-  (wPx, bPx, wPx, wPx, bPx, bPx, bPx, wPx, bPx, bPx, bPx, wPx, bPx, bPx, wPx, wPx, wPx),
-  (wPx, bPx, wPx, wPx, bPx, wPx, bPx, wPx, bPx, wPx, bPx, wPx, bPx, wPx, bPx, wPx, wPx),
-  (wPx, bPx, wPx, wPx, bPx, wPx, bPx, wPx, bPx, bPx, bPx, wPx, bPx, wPx, bPx, wPx, wPx),
-  (wPx, bPx, wPx, wPx, bPx, wPx, bPx, wPx, bPx, wPx, bPx, wPx, bPx, wPx, bPx, wPx, wPx),
-  (wPx, bPx, bPx, wPx, bPx, bPx, bPx, wPx, bPx, wPx, bPx, wPx, bPx, bPx, wPx, wPx, wPx),
-  tuple(wPx for _ in range(17)),
-  tuple(wPx for _ in range(17)),
-  tuple(wPx for _ in range(17)),
-  tuple(wPx for _ in range(17)),
-  tuple(wPx for _ in range(17)),
-  tuple(wPx for _ in range(17))
+  tuple(wPx for _ in range(23)),
+  tuple(wPx for _ in range(23)),
+  tuple(wPx for _ in range(23)),
+  tuple(wPx for _ in range(23)),
+  tuple(wPx for _ in range(23)),
+  tuple(wPx for _ in range(23)),
+  tuple(wPx for _ in range(23)),
+  tuple(wPx for _ in range(23)),
+  tuple(wPx for _ in range(23)),
+  (wPx, bPx, wPx, wPx, bPx, bPx, bPx, wPx, bPx, bPx, bPx, wPx, bPx, bPx, wPx, wPx, wPx, wPx, wPx, wPx, wPx, wPx, wPx),
+  (wPx, bPx, wPx, wPx, bPx, wPx, bPx, wPx, bPx, wPx, bPx, wPx, bPx, wPx, bPx, wPx, wPx, wPx, wPx, wPx, wPx, wPx, wPx),
+  (wPx, bPx, wPx, wPx, bPx, wPx, bPx, wPx, bPx, bPx, bPx, wPx, bPx, wPx, bPx, wPx, wPx, wPx, wPx, wPx, wPx, wPx, wPx),
+  (wPx, bPx, wPx, wPx, bPx, wPx, bPx, wPx, bPx, wPx, bPx, wPx, bPx, wPx, bPx, wPx, wPx, wPx, wPx, wPx, wPx, wPx, wPx),
+  (wPx, bPx, bPx, wPx, bPx, bPx, bPx, wPx, bPx, wPx, bPx, wPx, bPx, bPx, wPx, wPx, bPx, wPx, bPx, wPx, bPx, wPx, wPx),
+  tuple(wPx for _ in range(23)),
+  tuple(wPx for _ in range(23)),
+  tuple(wPx for _ in range(23)),
+  tuple(wPx for _ in range(23)),
+  tuple(wPx for _ in range(23)),
+  tuple(wPx for _ in range(23)),
+  tuple(wPx for _ in range(23)),
+  tuple(wPx for _ in range(23)),
+  tuple(wPx for _ in range(23))
 ))
 
 class DuplicatesMover:
