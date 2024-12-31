@@ -6,3 +6,4 @@ tk==0.1.0
 recordclass==0.17.2
 pyinstaller==5.2
 numpy==1.21.6
+imagehash==4.3.1

@@ -2,9 +2,9 @@ import os
 import sys
 import time
 import traceback
+import imagehash
 import datetime as dt
 from PIL import Image
-
 Image.MAX_IMAGE_PIXELS = None
 import get_image_size
 from Utils import logs
@@ -21,11 +21,9 @@ IMAGE_EXTENSIONS = None  # The images format
 VIDEO_EXTENSIONS = None  # The videos format
 PERCENTAGE = 0.05  # How frequently the program should show its progression
 
-
 # Return a queue with all images in root_dir
 images, nb_images, total_images = {}, {}, 0
 videos, nb_videos, total_videos = {}, {}, 0
-
 
 def list_files(directory=ROOT_DIR):
   global images, videos
@@ -104,12 +102,7 @@ def compare_dates(p1, p2):
   if new_date < old_date:
     old, new = p1, p2
     old_date, new_date = new_date, old_date
-  return (
-    old,
-    new,
-    dt.datetime.fromtimestamp(old_date),
-    dt.datetime.fromtimestamp(new_date),
-  )
+  return old, new, dt.datetime.fromtimestamp(old_date), dt.datetime.fromtimestamp(new_date)
 
 # Load image
 def load_image_pixels(im_path, draft_shape, listLocations, queue_cache, im_index):
@@ -132,34 +125,25 @@ DuplicatesInfo = recordclass(
 )
 duplicates = list()
 
-positionsFactors = [0, .25, .5, .75, 1]
-def iterate_queue(queue, queue_cache, ext, shape, i, percentage):
-  # Compute pixels positions to use for comparison
-  draft_shape = (shape[0] // 16, shape[1] // 16)
-  listLocations = [
-    tuple(
-      (int(draft_shape[0] * i), int(draft_shape[1] * j))
-      for i in positionsFactors
-      for j in positionsFactors
-    )
-  ]
-
+def iterate_queue(queue, queue_cache, ext, shape, progression, percentage):
   im1_index = nb_images[ext][shape] - 1
   while queue:
     # Compute new image values
     im1_path = queue.pop()
     if queue_cache[im1_index]:
-      im1_pixels = queue_cache[im1_index][0]
+      im1_hash = queue_cache[im1_index]
     else:
-      im1_pixels = load_image_pixels(
-        im1_path, draft_shape, listLocations, queue_cache, im1_index
-      )[0]
+      im1_hash = imagehash.average_hash(Image.open(im1_path))
+      queue_cache[im1_index] = im1_hash
     # Compare with other images
     for im2_index in range(im1_index):
       im2_path = queue[im2_index]
-      if im1_pixels in load_image_pixels(
-        im2_path, draft_shape, listLocations, queue_cache, im2_index
-      ):
+      if queue_cache[im2_index]:
+        im2_hash = queue_cache[im2_index]
+      else:
+        im2_hash = imagehash.average_hash(Image.open(im2_path))
+        queue_cache[im2_index] = im2_hash
+      if im1_hash == im2_hash:
         old, new, old_date, new_date = compare_dates(im1_path, im2_path)
         duplicates.append(
           DuplicatesInfo(
@@ -175,22 +159,21 @@ def iterate_queue(queue, queue_cache, ext, shape, i, percentage):
         break
     # Iterate
     im1_index -= 1
-    i += 1
-    if i / total_images > percentage:
+    progression += 1
+    if progression / total_images > percentage:
       logs(round(100 * percentage), "%")
       percentage += PERCENTAGE
-  return i, percentage
+  return progression, percentage
 
 
 def iterate_paths():
   logs("Iterating over all images...")
-  i = 0
-  percentage = 0
+  progression, percentage = 0, 0
   for ext in images:
     for shape in images[ext]:
       queue = images[ext][shape]
       queue_cache = [None for _ in queue]
-      i, percentage = iterate_queue(queue, queue_cache, ext, shape, i, percentage)
+      i, percentage = iterate_queue(queue, queue_cache, ext, shape, progression, percentage)
   logs("100 %. Done.")
   logs("Iterating over videos...")
   for ext in videos:
@@ -215,7 +198,6 @@ def iterate_paths():
 
 
 if __name__ == "__main__":
-
   try:
     while True:
       # Clear variables
@@ -260,5 +242,6 @@ if __name__ == "__main__":
     )
     logs("Something went wrong :( check the logs or message me.")
     logs("Press enter twice to close terminal.")
+    input()
     input()
     sys.exit(1)
