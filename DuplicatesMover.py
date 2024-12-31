@@ -153,7 +153,7 @@ class DuplicatesMover:
         # Flush
         plt.draw()
     # Schedule the next check
-    self.tk_root.after(500, self.check_for_images)
+    self.tk_root.after(100, self.check_for_images)
 
   def check_old_image_event(self):
     self.duplicates[self.i.value].remove_old = self.remove_old.get()
@@ -202,7 +202,7 @@ class DuplicatesMover:
         if os.path.exists(duplicate_path):
           target_path = f"{self.BIN_DIR}/{duplicate_path.split('/')[-1]}"
           if os.path.exists(target_path):
-            logs(f"Warning: {target_path} already exists and will be erased.", level="WARN")
+            logs(f"'{target_path}' already exists and will be erased.", level="WARN")
             os.remove(target_path)
           os.rename(duplicate_path, target_path)
     else:
