@@ -52,7 +52,7 @@ def list_files(directory=ROOT_DIR):
 def count_files():
   global nb_images, nb_videos, total_images, total_videos
   print()
-  logs("EXT SHAPE NB_IMAGES", level="INFO")
+  logs("EXT\tSHAPE\tNB_IMAGES", level="INFO")
   for ext in IMAGE_EXTENSIONS:
     if not images[ext]:
       continue
@@ -71,7 +71,7 @@ def count_files():
     for shape in one_or_less:
       images[ext].pop(shape)
   print()
-  logs("EXT SIZE NB_VIDEOS", level="INFO")
+  logs("EXT\tSIZE\tNB_VIDEOS", level="INFO")
   for ext in VIDEO_EXTENSIONS:
     if not videos[ext]:
       continue
@@ -280,6 +280,7 @@ if __name__ == "__main__":
         duplicates_mover.window_loop()
       else:
         logs("No duplicate found. Back to settings.", level="INFO")
+      print()
   except Exception as e:
     error_traceback = traceback.format_exc()
     logs(error_traceback, level="ERROR")
