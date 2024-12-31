@@ -108,16 +108,13 @@ DuplicatesInfo = recordclass(
 
 # Get image pixels from cache or compute it
 def get_image_pixels(im_path, draft_shape, listLocations, queue_cache, im_index):
-  if not queue_cache[im_index]:
+  if queue_cache[im_index] is None:
     # Cache image pixels
     im = Image.open(im_path)
     im.draft("RGB", draft_shape)
     pixel_data = im.load()
     queue_cache[im_index] = tuple(
-      tuple(
-        pixel_data[coordinates] for coordinates in locations
-      )
-      for locations in listLocations
+      pixel_data[coordinates] for coordinates in listLocations
     )
   return queue_cache[im_index]
 
@@ -129,13 +126,11 @@ def iterate_queue(queue, queue_cache, im1_index, shape, progression, percentage)
 
   # Compute pixels positions to use for comparison
   draft_shape = (shape[0] // 16, shape[1] // 16)
-  listLocations = [
-    tuple(
-      (int(draft_shape[0] * i), int(draft_shape[1] * j))
-      for i in positionsFactors
-      for j in positionsFactors
-    )
-  ]
+  listLocations = tuple(
+    (int(draft_shape[0] * i), int(draft_shape[1] * j))
+    for i in positionsFactors
+    for j in positionsFactors
+  )
   # Iterate queue
   while queue:
     # Compute new image hash and cache it
@@ -144,7 +139,7 @@ def iterate_queue(queue, queue_cache, im1_index, shape, progression, percentage)
     # Compare with other images
     for im2_index in range(im1_index):
       im2_path = queue[im2_index]
-      if im1_pixels in get_image_pixels(im2_path, draft_shape, listLocations, queue_cache, im2_index):
+      if im1_pixels == get_image_pixels(im2_path, draft_shape, listLocations, queue_cache, im2_index):
         old, new, old_date, new_date = compare_dates(im1_path, im2_path)
         duplicates.append(
           DuplicatesInfo(
