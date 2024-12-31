@@ -10,3 +10,5 @@ MoveDuplicates.spec
 dist/
 settings.txt
 TODO.txt
+tmp
+output.txt

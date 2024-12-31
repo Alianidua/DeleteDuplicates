@@ -1,5 +1,5 @@
-ROOT_DIRECTORY=C:\Users\victi\Desktop\testdeleteduplicate
-BIN_DIRECTORY=C:\Users\victi\Desktop\duplicates
+ROOT_DIRECTORY=C:/Users/user/Desktop/folder_to_scan
+BIN_DIRECTORY=C:/Users/user/Desktop/duplicates
 IMAGE_FORMATS=jpg,jpeg,JPG,JPEG,png,PNG
-VIDEO_FORMATS=mp4
-PROGRESSION_FREQUENCY=0.1
+VIDEO_FORMATS=mp4,webm
+PROGRESSION_FREQUENCY=0.05
