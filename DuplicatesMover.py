@@ -2,12 +2,32 @@ import os
 import sys
 import numpy as np
 import tkinter as tk
-from ImageLoader import ImageLoader
+from ImageLoader import ImageLoader, bPx, wPx
 from Utils import logs
 import multiprocessing
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
+
+mediaLoading = np.asarray((
+  tuple(wPx for _ in range(17)),
+  tuple(wPx for _ in range(17)),
+  tuple(wPx for _ in range(17)),
+  tuple(wPx for _ in range(17)),
+  tuple(wPx for _ in range(17)),
+  tuple(wPx for _ in range(17)),
+  (wPx, bPx, wPx, wPx, bPx, bPx, bPx, wPx, bPx, bPx, bPx, wPx, bPx, bPx, wPx, wPx, wPx),
+  (wPx, bPx, wPx, wPx, bPx, wPx, bPx, wPx, bPx, wPx, bPx, wPx, bPx, wPx, bPx, wPx, wPx),
+  (wPx, bPx, wPx, wPx, bPx, wPx, bPx, wPx, bPx, bPx, bPx, wPx, bPx, wPx, bPx, wPx, wPx),
+  (wPx, bPx, wPx, wPx, bPx, wPx, bPx, wPx, bPx, wPx, bPx, wPx, bPx, wPx, bPx, wPx, wPx),
+  (wPx, bPx, bPx, wPx, bPx, bPx, bPx, wPx, bPx, wPx, bPx, wPx, bPx, bPx, wPx, wPx, wPx),
+  tuple(wPx for _ in range(17)),
+  tuple(wPx for _ in range(17)),
+  tuple(wPx for _ in range(17)),
+  tuple(wPx for _ in range(17)),
+  tuple(wPx for _ in range(17)),
+  tuple(wPx for _ in range(17))
+))
 
 class DuplicatesMover:
   """Display duplicates, user may choose to move the more recent file/the older one/none/both into BIN_DIR"""
@@ -100,8 +120,8 @@ class DuplicatesMover:
     # Plt figure
     self.fig, self.ax = plt.subplots(1, 2)
     self.fig.set_size_inches(15, 15)
-    self.old_image = self.ax[0].imshow(np.zeros((1, 1)), animated=True)
-    self.new_image = self.ax[1].imshow(np.zeros((1, 1)), animated=True)
+    self.old_image = self.ax[0].imshow(mediaLoading, animated=True)
+    self.new_image = self.ax[1].imshow(mediaLoading, animated=True)
 
     # Tkinter
     fig_canvas = FigureCanvasTkAgg(self.fig, master=self.tk_root)

@@ -3,6 +3,7 @@ import sys
 import time
 import traceback
 import imagehash
+import numpy as np
 import datetime as dt
 from PIL import Image
 Image.MAX_IMAGE_PIXELS = None
@@ -104,45 +105,30 @@ def compare_dates(p1, p2):
     old_date, new_date = new_date, old_date
   return old, new, dt.datetime.fromtimestamp(old_date), dt.datetime.fromtimestamp(new_date)
 
-# Load image
-def load_image_pixels(im_path, draft_shape, listLocations, queue_cache, im_index):
-  if not queue_cache[im_index]:
-    # Load image for the first time
-    im = Image.open(im_path)
-    im.draft("RGB", draft_shape)
-    pixel_data = im.load()
-    queue_cache[im_index] = tuple(
-      tuple(
-        pixel_data[coordinates] for coordinates in locations
-      )
-      for locations in listLocations
-    )
-  return queue_cache[im_index]
-
 # Main loop; iterate on every images
 DuplicatesInfo = recordclass(
   "DuplicatesInfo", ["old", "new", "old_date", "new_date", "remove_old", "remove_new"]
 )
 duplicates = list()
 
+def get_image_hash(im_path, im_index, queue_cache):
+  if queue_cache[im_index] is None:
+    im_hash = imagehash.average_hash(Image.open(im_path))
+    queue_cache[im_index] = im_hash
+  else:
+    im_hash = queue_cache[im_index]
+  return im_hash
+
 def iterate_queue(queue, queue_cache, ext, shape, progression, percentage):
   im1_index = nb_images[ext][shape] - 1
   while queue:
-    # Compute new image values
+    # Compute new image hash and cache it
     im1_path = queue.pop()
-    if queue_cache[im1_index]:
-      im1_hash = queue_cache[im1_index]
-    else:
-      im1_hash = imagehash.average_hash(Image.open(im1_path))
-      queue_cache[im1_index] = im1_hash
+    im1_hash = get_image_hash(im1_path, im1_index, queue_cache)
     # Compare with other images
     for im2_index in range(im1_index):
       im2_path = queue[im2_index]
-      if queue_cache[im2_index]:
-        im2_hash = queue_cache[im2_index]
-      else:
-        im2_hash = imagehash.average_hash(Image.open(im2_path))
-        queue_cache[im2_index] = im2_hash
+      im2_hash = get_image_hash(im2_path, im2_index, queue_cache)
       if im1_hash == im2_hash:
         old, new, old_date, new_date = compare_dates(im1_path, im2_path)
         duplicates.append(
@@ -172,7 +158,7 @@ def iterate_paths():
   for ext in images:
     for shape in images[ext]:
       queue = images[ext][shape]
-      queue_cache = [None for _ in queue]
+      queue_cache = np.full((len(queue),), None, dtype=object)
       i, percentage = iterate_queue(queue, queue_cache, ext, shape, progression, percentage)
   logs("100 %. Done.")
   logs("Iterating over videos...")
