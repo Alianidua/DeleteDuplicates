@@ -52,7 +52,7 @@ def list_files(directory=ROOT_DIR):
 def count_files():
   global nb_images, nb_videos, total_images, total_videos
   print()
-  logs("  EXT          SHAPE         NB_IMAGES", level="INFO")
+  logs("EXT SHAPE NB_IMAGES", level="INFO")
   for ext in IMAGE_EXTENSIONS:
     if not images[ext]:
       continue
@@ -71,7 +71,7 @@ def count_files():
     for shape in one_or_less:
       images[ext].pop(shape)
   print()
-  logs("  EXT      SIZE      NB_VIDEOS", level="INFO")
+  logs("EXT SIZE NB_VIDEOS", level="INFO")
   for ext in VIDEO_EXTENSIONS:
     if not videos[ext]:
       continue
@@ -168,7 +168,7 @@ def report_progression(progression, percentage, mp_progression_queue):
     nb_images_processed, list_duplicates = mp_progression_queue.get_nowait()
     progression += nb_images_processed
     for old_path, new_path in list_duplicates:
-      logs(f"Potential duplicates: {old_path} {new_path}", level="OK")
+      logs(f"Potential duplicated images: {old_path} {new_path}", level="OK")
   if progression / total_images > percentage + PERCENTAGE:
     percentage = progression / total_images
     logs(f"{round(100 * percentage)} %", level="INFO")
@@ -243,10 +243,11 @@ def iterate_paths():
               remove_new=True,
             )
           )
-          logs("Potential duplicates:", v1, v2, level="OK")
+          logs("Potential duplicated videos:", v1, v2, level="OK")
   logs("100 %. Done.", level="SUCCESS")
 
 if __name__ == "__main__":
+  multiprocessing.freeze_support()
   try:
     while True:
       # Clear variables
@@ -284,7 +285,6 @@ if __name__ == "__main__":
     logs(error_traceback, level="ERROR")
     messagebox.showerror("Something went wrong :(", error_traceback)
     logs("Something went wrong :(", level="ERROR")
-    logs("Press enter twice to exit.", level="INFO")
-    input()
+    logs("Press enter to exit.", level="INFO")
     input()
     sys.exit(1)
