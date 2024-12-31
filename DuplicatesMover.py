@@ -153,7 +153,7 @@ class DuplicatesMover:
         # Flush
         plt.draw()
     # Schedule the next check
-    self.tk_root.after(100, self.check_for_images)
+    self.tk_root.after(500, self.check_for_images)
 
   def check_old_image_event(self):
     self.duplicates[self.i.value].remove_old = self.remove_old.get()
