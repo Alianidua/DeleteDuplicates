@@ -188,33 +188,29 @@ class DuplicatesMover:
 
   @staticmethod
   def delete_window_event():
-    logs("Window closed; program exiting 0")
+    logs("Window closed; program exiting 0", level="OK")
     sys.exit(0)
 
   def move_images(self):
     to_remove = [files.new for files in self.duplicates if files.remove_new] + [
       files.old for files in self.duplicates if files.remove_old
     ]
-    logs(f"Registered {len(to_remove)} files to move")
+    logs(f"Registered {len(to_remove)} files to move", level="INFO")
     if self.BIN_DIR:
-      logs(f"Moving them to bin folder: {self.BIN_DIR}")
+      logs(f"Moving them to bin folder: '{self.BIN_DIR}'", level="INFO")
       for duplicate_path in to_remove:
         if os.path.exists(duplicate_path):
           target_path = f"{self.BIN_DIR}/{duplicate_path.split('/')[-1]}"
           if os.path.exists(target_path):
-            logs(
-              "Warning:",
-              target_path,
-              "already exists and will be erased.",
-            )
+            logs(f"Warning: {target_path} already exists and will be erased.", level="WARNING")
             os.remove(target_path)
           os.rename(duplicate_path, target_path)
     else:
-      logs("No BIN_DIR defined; duplicates will not be moved")
+      logs("No BIN_DIR defined; duplicates will not be moved", level="WARNING")
 
   def window_loop(self):
     # Start tkinter loop
-    logs(f"Detected {self.duplicates_len} potentially duplicated files. ")
+    logs(f"Detected {self.duplicates_len} potentially duplicated files.", level="INFO")
     self.tk_root.mainloop()
     # Move images
     self.move_images()

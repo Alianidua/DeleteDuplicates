@@ -112,12 +112,12 @@ class SettingsManager:
     )
     confirm_button.grid(row=4, column=2)
     # Start tkinter loop
-    logs(f"Opening tkinter parameters window. ")
+    logs(f"Opening tkinter parameters window.", level="INFO")
     self.tk_root.mainloop()
 
   @staticmethod
   def delete_window_event():
-    logs("Settings window closed; program exiting 0")
+    logs("Settings window closed; program exiting 0", level="OK")
     sys.exit(0)
 
   def replace_root_dir(self):
@@ -135,7 +135,6 @@ class SettingsManager:
   def confirm_event(self, destroy=True):
     # Format values
     ROOT_DIR = self.root_dir_entry.get()
-    logs(ROOT_DIR)
     while ROOT_DIR and (ROOT_DIR[-1] == "\\" or ROOT_DIR[-1] == " "):
       ROOT_DIR = ROOT_DIR[:-1]
     while ROOT_DIR and ROOT_DIR[0] == " ":
@@ -160,14 +159,16 @@ class SettingsManager:
     if BIN_DIR:
       if not os.path.exists(BIN_DIR) or not os.path.isdir(BIN_DIR):
         logs(
-          f"{BIN_DIR} does not exist or is not a directory. It will be created when you close the window."
+          f"{BIN_DIR} does not exist or is not a directory. It will be created when you close the window.",
+          level="WARNING"
         )
       elif os.listdir(BIN_DIR):
         logs(
-          f"Warning : the following directory already exists and is not empty : {BIN_DIR} \nSome files in this directory may be overwritten"
+          f"Warning : the following directory already exists and is not empty : {BIN_DIR} \nSome files in this directory may be overwritten",
+          level="WARNING"
         )
     else:
-      logs("No BIN_DIR specified; the duplicates will not be removed")
+      logs("No BIN_DIR specified; the duplicates will not be removed", level="WARNING")
     # Set settings values
     self.ROOT_DIR = ROOT_DIR
     self.BIN_DIR = BIN_DIR
@@ -179,16 +180,19 @@ class SettingsManager:
       self.tk_root.destroy()
       self.tk_root.quit()
       logs(
-        f"Final settings loaded :\n\tROOT_DIR: {ROOT_DIR}\n\tBIN_DIR: {BIN_DIR}\n\tFORMATS: {IMAGE_EXTENSIONS}\n\tPROGRESSION_FREQUENCY: {PERCENTAGE}\n\tVIDEO_EXTENSIONS: {VIDEO_EXTENSIONS}\n"
+        f"Final settings loaded :\n\tROOT_DIR: {ROOT_DIR}\n\tBIN_DIR: {BIN_DIR}\n\tFORMATS: {IMAGE_EXTENSIONS}\n\tPROGRESSION_FREQUENCY: {PERCENTAGE}\n\tVIDEO_EXTENSIONS: {VIDEO_EXTENSIONS}\n",
+        level="OK"
       )
       if not os.path.exists(BIN_DIR) or not os.path.isdir(BIN_DIR):
         logs(
-          f"{BIN_DIR} does not exist or is not a directory. Creating BIN_DIR directory..."
+          f"{BIN_DIR} does not exist or is not a directory. Creating BIN_DIR directory...",
+          level="INFO"
         )
         os.mkdir(BIN_DIR)
     else:
       logs(
-        f"Settings loaded and written as default in {self.settings} :\n\tROOT_DIR: {ROOT_DIR}\n\tBIN_DIR: {BIN_DIR}\n\tFORMATS: {IMAGE_EXTENSIONS}\n\tPROGRESSION_FREQUENCY: {PERCENTAGE}\n\tVIDEO_EXTENSIONS: {VIDEO_EXTENSIONS}\n"
+        f"Settings loaded and written as default in {self.settings} :\n\tROOT_DIR: {ROOT_DIR}\n\tBIN_DIR: {BIN_DIR}\n\tFORMATS: {IMAGE_EXTENSIONS}\n\tPROGRESSION_FREQUENCY: {PERCENTAGE}\n\tVIDEO_EXTENSIONS: {VIDEO_EXTENSIONS}\n",
+        level="OK"
       )
 
   def set_default_event(self):
@@ -204,7 +208,7 @@ class SettingsManager:
 
   def load_default_settings(self):
     if not os.path.exists(self.settings):
-      logs("No default settings")
+      logs("No default settings", level="INFO")
       return
     try:
       with open(self.settings, encoding="utf-8") as settings:
@@ -235,7 +239,8 @@ class SettingsManager:
       else:
         PERCENTAGE = float(PERCENTAGE)
       logs(
-        f"Default settings loaded :\n\tROOT_DIR: {ROOT_DIR}\n\tBIN_DIR: {BIN_DIR}\n\tFORMATS: {IMAGE_EXTENSIONS}\n\tPROGRESSION_FREQUENCY: {PERCENTAGE}\n\tVIDEO_EXTENSIONS: {VIDEO_EXTENSIONS}\n"
+        f"Default settings loaded :\n\tROOT_DIR: {ROOT_DIR}\n\tBIN_DIR: {BIN_DIR}\n\tFORMATS: {IMAGE_EXTENSIONS}\n\tPROGRESSION_FREQUENCY: {PERCENTAGE}\n\tVIDEO_EXTENSIONS: {VIDEO_EXTENSIONS}\n",
+        level = "INFO"
       )
       self.ROOT_DIR = ROOT_DIR
       self.BIN_DIR = BIN_DIR
@@ -243,7 +248,7 @@ class SettingsManager:
       self.VIDEO_EXTENSIONS = VIDEO_EXTENSIONS
       self.PERCENTAGE = PERCENTAGE
     except Exception as e:
-      logs("Error while parsing default settings. Continuing")
+      logs("Error while parsing default settings. Continuing", level="ERROR")
 
   def get_settings(self):
     return self.ROOT_DIR, self.BIN_DIR, self.IMAGE_EXTENSIONS, self.VIDEO_EXTENSIONS, self.PERCENTAGE,

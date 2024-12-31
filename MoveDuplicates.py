@@ -38,7 +38,7 @@ def list_files(directory=ROOT_DIR):
           images[ext][shape] = []
         images[ext][shape].append(fpath)
       except Exception as e:
-        logs(f"{e}\nWARNING : something wrong happened with this file : '{fpath}'; this file will be ignored")
+        logs(f"{e}\nSomething wrong happened with this file : '{fpath}'; this file will be ignored", level="WARNING")
     elif ext in VIDEO_EXTENSIONS:
       try:
         size = os.stat(fpath).st_size
@@ -46,16 +46,17 @@ def list_files(directory=ROOT_DIR):
           videos[ext][size] = []
         videos[ext][size].append(fpath)
       except Exception as e:
-        logs(f"{e}\nWARNING : something wrong happened with this file : '{fpath}'; this file will be ignored")
+        logs(f"{e}\nSomething wrong happened with this file : '{fpath}'; this file will be ignored", level="WARNING")
 
 # Count number of images per extension and shape
 def count_files():
   global nb_images, nb_videos, total_images, total_videos
-  logs("  EXT          SHAPE         NB_IMAGES")
+  print()
+  logs("  EXT          SHAPE         NB_IMAGES", level="INFO")
   for ext in IMAGE_EXTENSIONS:
     if not images[ext]:
       continue
-    logs(f"[ {ext} ]")
+    logs(f"[ {ext} ]", level="INFO")
     one_or_less = []
     for shape in images[ext]:
       if not images[ext][shape]:
@@ -64,16 +65,17 @@ def count_files():
       if count <= 1:
         one_or_less.append(shape)
       else:
-        logs(f"\t  {shape}:   \t{count}")
+        logs(f"\t  {shape}:   \t{count}", level="INFO")
         nb_images[ext][shape] = count
         total_images += count
     for shape in one_or_less:
       images[ext].pop(shape)
-  logs("\n  EXT      SIZE      NB_VIDEOS")
+  print()
+  logs("  EXT      SIZE      NB_VIDEOS", level="INFO")
   for ext in VIDEO_EXTENSIONS:
     if not videos[ext]:
       continue
-    logs(f"[ {ext} ]")
+    logs(f"[ {ext} ]", level="INFO")
     one_or_less = []
     for size in videos[ext]:
       if not videos[ext][size]:
@@ -82,14 +84,14 @@ def count_files():
       if count <= 1:
         one_or_less.append(size)
       else:
-        logs(f"\t  {size}:   \t{count}")
+        logs(f"\t  {size}:   \t{count}", level="INFO")
         nb_videos[ext][size] = count
         total_videos += count
     for size in one_or_less:
       videos[ext].pop(size)
-  logs()
-  logs(total_images, "potential duplicated images.")
-  logs(total_videos, "potential duplicated videos.\n")
+  print()
+  logs(total_images, "potentially duplicated images.", level="INFO")
+  logs(total_videos, "potentially duplicated videos.\n", level="INFO")
 
 # Compare 2 images dates
 def compare_dates(p1, p2):
@@ -166,10 +168,10 @@ def report_progression(progression, percentage, mp_progression_queue):
     nb_images_processed, list_duplicates = mp_progression_queue.get_nowait()
     progression += nb_images_processed
     for old_path, new_path in list_duplicates:
-      logs(f"Potential duplicates: {old_path} {new_path}")
+      logs(f"Potential duplicates: {old_path} {new_path}", level="OK")
   if progression / total_images > percentage + PERCENTAGE:
     percentage = progression / total_images
-    logs(f"{round(100 * percentage)} %")
+    logs(f"{round(100 * percentage)} %", level="INFO")
   return progression, percentage
 
 # Return batches of images eligible for multiprocessing computing
@@ -192,16 +194,15 @@ def get_mp_shapes(image_shapes, image_counts):
 # Find potential duplicates in registered paths, create subprocesses for biggest batches
 def iterate_paths():
   global images, nb_images
-  logs("Iterating over all images...")
+  logs("Iterating over all images...", level="INFO")
   processes = []
   progression, percentage = 0, 0
   mp_progression_queue = multiprocessing.Queue()
   # Spawn subprocesses for big batches
   mp_shapes = get_mp_shapes(images, nb_images)
   if mp_shapes:
-    logs(f"Spawning {len(mp_shapes)} subprocesses for the following shapes :")
+    logs(f"Spawning {len(mp_shapes)} subprocesses for the following shapes :", level="INFO")
     for image_batch, ext, shape, images_nb in mp_shapes:
-      logs(f" • {ext} {shape} -> {images_nb} elements to scan")
       pixels_cache = np.full((len(image_batch),), None, dtype=object)
       process = multiprocessing.Process(
         target=iterate_queue,
@@ -209,8 +210,9 @@ def iterate_paths():
       )
       processes.append(process)
       process.start()
-  logs()
+      logs(f" • {ext} {shape} -> {images_nb} elements to scan", level="OK")
   # Scan rest of duplicates
+  logs("Starting main scan...", level="INFO")
   for ext in images:
     for shape in images[ext]:
       queue = images[ext][shape]
@@ -221,8 +223,8 @@ def iterate_paths():
   while any(p.is_alive() for p in processes):
     progression, percentage = report_progression(progression, percentage, mp_progression_queue)
     time.sleep(1)
-  logs("100 %. Done.")
-  logs("Iterating over videos...")
+  logs("100 %. Done.", level="SUCCESS")
+  logs("Iterating over videos...", level="INFO")
   for ext in videos:
     for size in videos[ext]:
       n = nb_videos[ext][size]
@@ -241,8 +243,8 @@ def iterate_paths():
               remove_new=True,
             )
           )
-          logs("Potential duplicates:", v1, v2)
-  logs("100 %. Done.")
+          logs("Potential duplicates:", v1, v2, level="OK")
+  logs("100 %. Done.", level="SUCCESS")
 
 if __name__ == "__main__":
   try:
@@ -254,19 +256,21 @@ if __name__ == "__main__":
       # Load settings
       settings_manager = SettingsManager()
       ROOT_DIR, BIN_DIR, IMAGE_EXTENSIONS, VIDEO_EXTENSIONS, PERCENTAGE = settings_manager.get_settings()
+      if not os.path.isdir(ROOT_DIR):
+        raise Exception(f"Error: '{ROOT_DIR}' is not a directory, please provide a valid path")
       # List files
       images = {ext: {} for ext in IMAGE_EXTENSIONS}
       nb_images = {ext: {} for ext in IMAGE_EXTENSIONS}
       videos = {ext: {} for ext in VIDEO_EXTENSIONS}
       nb_videos = {ext: {} for ext in VIDEO_EXTENSIONS}
-      logs("Listing images and videos...")
+      logs("Listing images and videos...", level="INFO")
       t_start = time.time()
       list_files(directory=ROOT_DIR)
       # Count files
       count_files()
       # Start duplicates detection
       iterate_paths()
-      logs(f"Computing time : {round(time.time() - t_start, 2)} seconds.")
+      logs(f"Computing time : {round(time.time() - t_start, 2)} seconds.", level="INFO")
       # Show and move images
       if duplicates:
         duplicates_mover = DuplicatesMover(
@@ -274,13 +278,13 @@ if __name__ == "__main__":
         )
         duplicates_mover.window_loop()
       else:
-        logs("No duplicate found. Back to settings.")
+        logs("No duplicate found. Back to settings.", level="INFO")
   except Exception as e:
     error_traceback = traceback.format_exc()
-    logs(error_traceback)
+    logs(error_traceback, level="ERROR")
     messagebox.showerror("Something went wrong :(", error_traceback)
-    logs("Something went wrong :(")
-    logs("Press enter twice to exit.")
+    logs("Something went wrong :(", level="ERROR")
+    logs("Press enter twice to exit.", level="INFO")
     input()
     input()
     sys.exit(1)
