@@ -202,11 +202,11 @@ class DuplicatesMover:
         if os.path.exists(duplicate_path):
           target_path = f"{self.BIN_DIR}/{duplicate_path.split('/')[-1]}"
           if os.path.exists(target_path):
-            logs(f"Warning: {target_path} already exists and will be erased.", level="WARNING")
+            logs(f"Warning: {target_path} already exists and will be erased.", level="WARN")
             os.remove(target_path)
           os.rename(duplicate_path, target_path)
     else:
-      logs("No BIN_DIR defined; duplicates will not be moved", level="WARNING")
+      logs("No BIN_DIR defined; duplicates will not be moved", level="WARN")
 
   def window_loop(self):
     # Start tkinter loop

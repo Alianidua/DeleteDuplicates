@@ -160,15 +160,15 @@ class SettingsManager:
       if not os.path.exists(BIN_DIR) or not os.path.isdir(BIN_DIR):
         logs(
           f"{BIN_DIR} does not exist or is not a directory. It will be created when you close the window.",
-          level="WARNING"
+          level="WARN"
         )
       elif os.listdir(BIN_DIR):
         logs(
           f"Warning : the following directory already exists and is not empty : {BIN_DIR} \nSome files in this directory may be overwritten",
-          level="WARNING"
+          level="WARN"
         )
     else:
-      logs("No BIN_DIR specified; the duplicates will not be removed", level="WARNING")
+      logs("No BIN_DIR specified; the duplicates will not be removed", level="WARN")
     # Set settings values
     self.ROOT_DIR = ROOT_DIR
     self.BIN_DIR = BIN_DIR

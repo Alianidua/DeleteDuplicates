@@ -38,7 +38,7 @@ def list_files(directory=ROOT_DIR):
           images[ext][shape] = []
         images[ext][shape].append(fpath)
       except Exception as e:
-        logs(f"{e}\nSomething wrong happened with this file : '{fpath}'; this file will be ignored", level="WARNING")
+        logs(f"{e}\nSomething wrong happened with this file : '{fpath}'; this file will be ignored", level="WARN")
     elif ext in VIDEO_EXTENSIONS:
       try:
         size = os.stat(fpath).st_size
@@ -46,7 +46,7 @@ def list_files(directory=ROOT_DIR):
           videos[ext][size] = []
         videos[ext][size].append(fpath)
       except Exception as e:
-        logs(f"{e}\nSomething wrong happened with this file : '{fpath}'; this file will be ignored", level="WARNING")
+        logs(f"{e}\nSomething wrong happened with this file : '{fpath}'; this file will be ignored", level="WARN")
 
 # Count number of images per extension and shape
 def count_files():
