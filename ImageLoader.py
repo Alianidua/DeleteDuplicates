@@ -58,9 +58,9 @@ class ImageLoader:
 
   def load_images(self, old, new, old_date, new_date):
     old_image, new_image = mediaCouldNotBeLoaded, mediaCouldNotBeLoaded
+    old_title = f"Oldest edited file\n{old[self.root_dir_len:]}\n{old_date}"
+    new_title = f"Most recently edited file\n{new[self.root_dir_len:]}\n{new_date}"
     if old.split(".")[-1] in self.VIDEO_EXT:
-      old_title = f"Oldest video\n{old[self.root_dir_len:]}\n{old_date}"
-      new_title = f"Newest video\n{new[self.root_dir_len:]}\n{new_date}"
       videos = (cv.VideoCapture(old), cv.VideoCapture(new))
       try:
         old_image = cv.cvtColor(videos[0].read()[1], cv.COLOR_BGR2RGB)
@@ -72,8 +72,6 @@ class ImageLoader:
         pass
       videos[0].release(), videos[1].release()
     else:
-      old_title = f"Oldest image\n{old[self.root_dir_len:]}\n{old_date}"
-      new_title = f"Newest image\n{new[self.root_dir_len:]}\n{new_date}"
       try:
         old_image = Image.open(old)
         old_image.draft("RGB", (old_image.size[0] // 64, old_image.size[1] // 64))
@@ -84,4 +82,4 @@ class ImageLoader:
         new_image.draft("RGB", (new_image.size[0] // 64, new_image.size[1] // 64))
       except:
         pass
-    return np.asarray(old_image), np.asarray(old_title), np.asarray(new_image), np.asarray(new_title)
+    return np.asarray(old_image), np.asarray(old_title), new_image, new_title

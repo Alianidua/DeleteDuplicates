@@ -107,23 +107,21 @@ DuplicatesInfo = recordclass(
 )
 
 # Get image pixels from cache or compute it
-def get_image_pixels(im_path, draft_shape, listLocations, queue_cache, im_index):
-  if queue_cache[im_index] is None:
+def get_image_pixels(im_path, draft_shape, listLocations, pixels_cache, im_index):
+  if pixels_cache[im_index] is None:
     # Cache image pixels
     im = Image.open(im_path)
     im.draft("RGB", draft_shape)
     pixel_data = im.load()
-    queue_cache[im_index] = tuple(
+    pixels_cache[im_index] = tuple(
       pixel_data[coordinates] for coordinates in listLocations
     )
-  return queue_cache[im_index]
+  return pixels_cache[im_index]
 
 # Detect potential duplicates images for given extension and shape
-duplicates = list()
 positionsFactors = [0, .25, .5, .75, 1]
-def iterate_queue(queue, queue_cache, im1_index, shape, progression, percentage):
-  global positionsFactors, duplicates
-
+def iterate_queue(queue, pixels_cache, nb_indexes, shape, mp_progression_queue, duplicates):
+  global positionsFactors
   # Compute pixels positions to use for comparison
   draft_shape = (shape[0] // 16, shape[1] // 16)
   listLocations = tuple(
@@ -132,14 +130,16 @@ def iterate_queue(queue, queue_cache, im1_index, shape, progression, percentage)
     for j in positionsFactors
   )
   # Iterate queue
+  im1_index = nb_indexes
+  potential_duplicates = []
   while queue:
     # Compute new image hash and cache it
     im1_path = queue.pop()
-    im1_pixels = get_image_pixels(im1_path, draft_shape, listLocations, queue_cache, im1_index)
+    im1_pixels = get_image_pixels(im1_path, draft_shape, listLocations, pixels_cache, im1_index)
     # Compare with other images
     for im2_index in range(im1_index):
       im2_path = queue[im2_index]
-      if im1_pixels == get_image_pixels(im2_path, draft_shape, listLocations, queue_cache, im2_index):
+      if im1_pixels == get_image_pixels(im2_path, draft_shape, listLocations, pixels_cache, im2_index):
         old, new, old_date, new_date = compare_dates(im1_path, im2_path)
         duplicates.append(
           DuplicatesInfo(
@@ -151,67 +151,76 @@ def iterate_queue(queue, queue_cache, im1_index, shape, progression, percentage)
             remove_new=True,
           )
         )
-        logs("Potential duplicates:", im1_path, im2_path)
+        potential_duplicates.append((old, new))
         break
-    # Iterate
+    # Iterate and report progression
     im1_index -= 1
-    progression += 1
-    if progression / total_images > percentage:
-      logs(round(100 * percentage), "%")
-      percentage += PERCENTAGE
+    if (nb_indexes - im1_index) % 100 == 0:
+      mp_progression_queue.put((100, potential_duplicates))
+      potential_duplicates = []
+  mp_progression_queue.put((nb_indexes % 100, potential_duplicates))
+
+# Report multiprocess scan progression
+def report_progression(progression, percentage, mp_progression_queue):
+  while not mp_progression_queue.empty():
+    nb_images_processed, list_duplicates = mp_progression_queue.get_nowait()
+    progression += nb_images_processed
+    for old_path, new_path in list_duplicates:
+      logs(f"Potential duplicates: {old_path} {new_path}")
+  if progression / total_images > percentage + PERCENTAGE:
+    percentage = progression / total_images
+    logs(f"{round(100 * percentage)} %")
   return progression, percentage
 
-# Compute all images hashes, compatible with multiprocessing
-def multiprocess_compute_cache(queue, queue_cache, shape):
-  global positionsFactors, duplicates
-
-  # Compute pixels positions to use for comparison
-  draft_shape = (shape[0] // 16, shape[1] // 16)
-  listLocations = [
-    tuple(
-      (int(draft_shape[0] * i), int(draft_shape[1] * j))
-      for i in positionsFactors
-      for j in positionsFactors
-    )
+# Return batches of images eligible for multiprocessing computing
+def get_mp_shapes(image_shapes, image_counts):
+  # Step 1: Flatten the dictionary and filter small batches
+  filtered_list = [
+      (ext, shape, value)
+      for ext, shapes in image_counts.items()
+      for shape, value in shapes.items()
+      if value > 150
   ]
-  # Iterate queue
-  while not queue.empty():
-    try:
-      im_index, im_path = queue.get_nowait()
-      get_image_pixels(im_path, draft_shape, listLocations, queue_cache, im_index)
-    except:
-      pass
+  # Step 2: Sort the filtered list by value in descending order
+  filtered_list.sort(key=lambda x: x[2], reverse=True)
+  # Step 3: Take up to the top 8 entries
+  top_shapes = filtered_list[:multiprocessing.cpu_count()-1]
+  # Step 4: Extract (extension, shape) tuples
+  result = [(ext, shape) for ext, shape, value in top_shapes]
+  return [(image_shapes[ext].pop(shape), ext, shape, image_counts[ext][shape]) for ext, shape in result]
 
-# Find potential duplicates in registered paths
+# Find potential duplicates in registered paths, create subprocesses for biggest batches
 def iterate_paths():
-  global nb_images, images
+  global images, nb_images
   logs("Iterating over all images...")
+  processes = []
   progression, percentage = 0, 0
+  mp_progression_queue = multiprocessing.Queue()
+  # Spawn subprocesses for big batches
+  mp_shapes = get_mp_shapes(images, nb_images)
+  if mp_shapes:
+    logs(f"Spawning {len(mp_shapes)} subprocesses for the following shapes :")
+    for image_batch, ext, shape, images_nb in mp_shapes:
+      logs(f" • {ext} {shape} -> {images_nb} elements to scan")
+      pixels_cache = np.full((len(image_batch),), None, dtype=object)
+      process = multiprocessing.Process(
+        target=iterate_queue,
+        args=(image_batch, pixels_cache, images_nb-1, shape, mp_progression_queue, duplicates)
+      )
+      processes.append(process)
+      process.start()
+  logs()
+  # Scan rest of duplicates
   for ext in images:
     for shape in images[ext]:
       queue = images[ext][shape]
-      if nb_images[ext][shape] < 50:
-        queue_cache = np.full((len(queue),), None, dtype=object)
-        progression, percentage = iterate_queue(queue, queue_cache, nb_images[ext][shape]-1, shape, progression, percentage)
-      else:
-        m_queue = multiprocessing.Queue()
-        for i, path in enumerate(queue):
-          m_queue.put((i, path))
-        m_queue_cache = multiprocessing.Manager().list()
-        m_queue_cache.extend([None for _ in range(len(images[ext][shape]))])
-        processes = []
-        for _ in range(min(len(queue) // 50, 4)):
-          process = multiprocessing.Process(
-            target=multiprocess_compute_cache,
-            args=(m_queue, m_queue_cache, shape)
-          )
-          processes.append(process)
-          process.start()
-        multiprocess_compute_cache(m_queue, m_queue_cache, shape)
-        for process in processes:
-          process.join()
-        progression, percentage = iterate_queue(queue, m_queue_cache, nb_images[ext][shape]-1, shape, progression, percentage)
-
+      pixels_cache = np.full((nb_images[ext][shape],), None, dtype=object)
+      iterate_queue(queue, pixels_cache, nb_images[ext][shape]-1, shape, mp_progression_queue, duplicates)
+      progression, percentage = report_progression(progression, percentage, mp_progression_queue)
+  # Wait for subprocesses to end
+  while any(p.is_alive() for p in processes):
+    progression, percentage = report_progression(progression, percentage, mp_progression_queue)
+    time.sleep(1)
   logs("100 %. Done.")
   logs("Iterating over videos...")
   for ext in videos:
@@ -241,7 +250,7 @@ if __name__ == "__main__":
       # Clear variables
       total_images = 0
       total_videos = 0
-      duplicates = list()
+      duplicates = multiprocessing.Manager().list()
       # Load settings
       settings_manager = SettingsManager()
       ROOT_DIR, BIN_DIR, IMAGE_EXTENSIONS, VIDEO_EXTENSIONS, PERCENTAGE = settings_manager.get_settings()
