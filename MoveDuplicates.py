@@ -140,7 +140,7 @@ def iterate_queue(queue, queue_cache, im1_index, progression, percentage):
             remove_new=True,
           )
         )
-        logs("Potential duplicates :", im1_path, im2_path)
+        logs("Potential duplicates:", im1_path, im2_path)
         break
     # Iterate
     im1_index -= 1
@@ -158,28 +158,35 @@ def multiprocess_compute_hashes(queue, queue_cache):
 
 # Find potential duplicates in registered paths
 def iterate_paths():
+  global nb_images, images
   logs("Iterating over all images...")
   progression, percentage = 0, 0
   for ext in images:
     for shape in images[ext]:
       queue = images[ext][shape]
-      if len(shape) > 1:
+      if nb_images[ext][shape] < 50:
+        queue_cache = np.full((len(queue),), None, dtype=object)
+        progression, percentage = iterate_queue(queue, queue_cache, nb_images[ext][shape]-1, progression, percentage)
+      else:
+        logs("Creating subprocess to help computing hashes...")
         m_queue = multiprocessing.Queue()
         for i, path in enumerate(queue):
           m_queue.put((i, path))
         m_queue_cache = multiprocessing.Manager().list()
         m_queue_cache.extend([None for _ in range(len(images[ext][shape]))])
-        process = multiprocessing.Process(
-          target=multiprocess_compute_hashes,
-          args=(m_queue, m_queue_cache)
-        )
-        process.start()
+        processes = []
+        for _ in range(min(len(queue) // 50, 4)):
+          process = multiprocessing.Process(
+            target=multiprocess_compute_hashes,
+            args=(m_queue, m_queue_cache)
+          )
+          processes.append(process)
+          process.start()
         multiprocess_compute_hashes(m_queue, m_queue_cache)
-        process.join()
+        for process in processes:
+          process.join()
         progression, percentage = iterate_queue(queue, m_queue_cache, nb_images[ext][shape]-1, progression, percentage)
-      else:
-        queue_cache = np.full((len(queue),), None, dtype=object)
-        progression, percentage = iterate_queue(queue, queue_cache, nb_images[ext][shape]-1, progression, percentage)
+
   logs("100 %. Done.")
   logs("Iterating over videos...")
   for ext in videos:
@@ -200,6 +207,7 @@ def iterate_paths():
               remove_new=True,
             )
           )
+          logs("Potential duplicates:", v1, v2)
   logs("100 %. Done.")
 
 if __name__ == "__main__":

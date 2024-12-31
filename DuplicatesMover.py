@@ -188,8 +188,8 @@ class DuplicatesMover:
 
   @staticmethod
   def delete_window_event():
-    logs("Window closed; program exiting 2")
-    sys.exit(2)
+    logs("Window closed; program exiting 0")
+    sys.exit(0)
 
   def move_images(self):
     to_remove = [files.new for files in self.duplicates if files.remove_new] + [

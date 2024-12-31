@@ -118,7 +118,7 @@ class SettingsManager:
   @staticmethod
   def delete_window_event():
     logs("Settings window closed; program exiting 0")
-    sys.exit(2)
+    sys.exit(0)
 
   def replace_root_dir(self):
     new_dir = tk.filedialog.askdirectory()
