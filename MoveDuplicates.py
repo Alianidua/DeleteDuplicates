@@ -109,7 +109,7 @@ DuplicatesInfo = recordclass(
 # Get image pixels from cache or compute it
 def get_image_pixels(im_path, draft_shape, listLocations, queue_cache, im_index):
   if not queue_cache[im_index]:
-    # Load image for the first time
+    # Cache image pixels
     im = Image.open(im_path)
     im.draft("RGB", draft_shape)
     pixel_data = im.load()
