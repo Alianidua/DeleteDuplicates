@@ -164,7 +164,7 @@ class SettingsManager:
         )
       elif os.listdir(BIN_DIR):
         logs(
-          f"Warning : the following directory already exists and is not empty : {BIN_DIR} \nSome files in this directory may be overwritten",
+          f"The following directory already exists and is not empty : '{BIN_DIR}'\nSome files in this directory may be overwritten",
           level="WARN"
         )
     else:

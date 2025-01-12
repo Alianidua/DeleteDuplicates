@@ -1,6 +1,8 @@
 import os
 import sys
 import time
+import locale
+locale.setlocale(locale.LC_ALL,'')
 import traceback
 import numpy as np
 import datetime as dt
@@ -101,7 +103,7 @@ def compare_dates(p1, p2):
   if new_date < old_date:
     old, new = p1, p2
     old_date, new_date = new_date, old_date
-  return old, new, dt.datetime.fromtimestamp(old_date), dt.datetime.fromtimestamp(new_date)
+  return old, new, dt.datetime.fromtimestamp(old_date).strftime('%a %d %b %Y %H:%M:%S'), dt.datetime.fromtimestamp(new_date).strftime('%a %d %b %Y %H:%M:%S')
 
 # Main loop; iterate on every images
 DuplicatesInfo = recordclass(
