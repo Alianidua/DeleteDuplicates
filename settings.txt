@@ -1,5 +1,5 @@
-ROOT_DIRECTORY=C:/Users/user/Desktop/folder_to_scan
-BIN_DIRECTORY=C:/Users/user/Desktop/duplicates
-IMAGE_FORMATS=jpg,jpeg,JPG,JPEG,png,PNG
-VIDEO_FORMATS=mp4,webm
-PROGRESSION_FREQUENCY=0.05
+ROOT_DIRECTORY=C:/Users/example/test
+BIN_DIRECTORY=C:/Users/example/test
+IMAGE_FORMATS=jpg,jpeg,JPG,JPEG,png,PNG,dgn,HEIC
+VIDEO_FORMATS=mp4,webm,mov,MOV
+PROGRESSION_FREQUENCY=0.1
