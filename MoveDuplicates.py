@@ -8,7 +8,6 @@ import numpy as np
 import datetime as dt
 from PIL import Image
 Image.MAX_IMAGE_PIXELS = None
-import get_image_size
 import multiprocessing
 from Utils import logs
 from tkinter import messagebox
@@ -35,7 +34,8 @@ def list_files(directory=ROOT_DIR):
       list_files(fpath)
     elif ext in IMAGE_EXTENSIONS:
       try:
-        shape = get_image_size.get_image_size(fpath)
+        with Image.open(fpath) as image:
+          shape = image.size
         if shape not in images[ext]:
           images[ext][shape] = []
         images[ext][shape].append(fpath)
