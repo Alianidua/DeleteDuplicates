@@ -1,6 +1,7 @@
 import os
 import sys
 import time
+from queue import Empty
 import locale
 locale.setlocale(locale.LC_ALL,'')
 import traceback
@@ -26,29 +27,29 @@ PERCENTAGE = 0.05  # How frequently the program should show its progression
 # Return a queue with all images in root_dir
 def list_files(directory=ROOT_DIR):
   global images, videos
-  D = os.listdir(directory)
-  for fpath in D:
-    ext = fpath.split(".")[-1]
-    fpath = f"{directory}/{fpath}"
-    if os.path.isdir(fpath):
-      list_files(fpath)
-    elif ext in IMAGE_EXTENSIONS:
-      try:
-        with Image.open(fpath) as image:
-          shape = image.size
-        if shape not in images[ext]:
-          images[ext][shape] = []
-        images[ext][shape].append(fpath)
-      except Exception as e:
-        logs(f"{e}\nSomething wrong happened with this file : '{fpath}'; this file will be ignored", level="WARN")
-    elif ext in VIDEO_EXTENSIONS:
-      try:
-        size = os.stat(fpath).st_size
-        if size not in videos[ext]:
-          videos[ext][size] = []
-        videos[ext][size].append(fpath)
-      except Exception as e:
-        logs(f"{e}\nSomething wrong happened with this file : '{fpath}'; this file will be ignored", level="WARN")
+  with os.scandir(directory) as entries:
+    for entry in entries:
+      ext = entry.name.split(".")[-1]
+      fpath = entry.path
+      if entry.is_dir():
+        list_files(fpath)
+      elif ext in IMAGE_EXTENSIONS:
+        try:
+          with Image.open(fpath) as image:
+            shape = image.size
+          if shape not in images[ext]:
+            images[ext][shape] = []
+          images[ext][shape].append(fpath)
+        except Exception as e:
+          logs(f"{e}\nSomething wrong happened with this file : '{fpath}'; this file will be ignored", level="WARN")
+      elif ext in VIDEO_EXTENSIONS:
+        try:
+          size = os.stat(fpath).st_size
+          if size not in videos[ext]:
+            videos[ext][size] = []
+          videos[ext][size].append(fpath)
+        except Exception as e:
+          logs(f"{e}\nSomething wrong happened with this file : '{fpath}'; this file will be ignored", level="WARN")
 
 # Count number of images per extension and shape
 def count_files():
@@ -114,18 +115,17 @@ DuplicatesInfo = recordclass(
 def get_image_pixels(im_path, draft_shape, listLocations, pixels_cache, im_index):
   if pixels_cache[im_index] is None:
     # Cache image pixels
-    im = Image.open(im_path)
-    im.draft("RGB", draft_shape)
-    pixel_data = im.load()
-    pixels_cache[im_index] = tuple(
-      pixel_data[coordinates] for coordinates in listLocations
-    )
+    with Image.open(im_path) as im:
+      im.draft("RGB", draft_shape)
+      pixel_data = im.load()
+      pixels_cache[im_index] = tuple(
+        pixel_data[coordinates] for coordinates in listLocations
+      )
   return pixels_cache[im_index]
 
 # Detect potential duplicates images for given extension and shape
 positionsFactors = [0, .25, .5, .75, 1]
-def iterate_queue(queue, pixels_cache, nb_indexes, shape, mp_progression_queue, duplicates):
-  global positionsFactors
+def iterate_queue(queue, pixels_cache, shape, mp_progression_queue, duplicates):
   # Compute pixels positions to use for comparison
   draft_shape = (shape[0] // 16, shape[1] // 16)
   listLocations = tuple(
@@ -133,41 +133,50 @@ def iterate_queue(queue, pixels_cache, nb_indexes, shape, mp_progression_queue, 
     for i in positionsFactors
     for j in positionsFactors
   )
-  # Iterate queue
-  im1_index = nb_indexes
+  # Build a lookup so each signature is compared once instead of pairwise.
+  for image_index, image_path in enumerate(queue):
+    get_image_pixels(image_path, draft_shape, listLocations, pixels_cache, image_index)
+  first_index_by_signature = {}
+  for image_index in range(len(queue)):
+    signature = pixels_cache[image_index]
+    if signature not in first_index_by_signature:
+      first_index_by_signature[signature] = image_index
+
   potential_duplicates = []
-  while queue:
-    # Compute new image hash and cache it
-    im1_path = queue.pop()
-    im1_pixels = get_image_pixels(im1_path, draft_shape, listLocations, pixels_cache, im1_index)
-    # Compare with other images
-    for im2_index in range(im1_index):
-      im2_path = queue[im2_index]
-      if im1_pixels == get_image_pixels(im2_path, draft_shape, listLocations, pixels_cache, im2_index):
-        old, new, old_date, new_date = compare_dates(im1_path, im2_path)
-        duplicates.append(
-          DuplicatesInfo(
-            old=old,
-            new=new,
-            old_date=old_date,
-            new_date=new_date,
-            remove_old=False,
-            remove_new=True,
-          )
+  duplicate_batch = []
+  image_count = len(queue)
+  for processed_count, image_index in enumerate(range(image_count - 1, -1, -1), start=1):
+    first_index = first_index_by_signature[pixels_cache[image_index]]
+    if first_index < image_index:
+      old, new, old_date, new_date = compare_dates(queue[image_index], queue[first_index])
+      duplicate_batch.append(
+        DuplicatesInfo(
+          old=old,
+          new=new,
+          old_date=old_date,
+          new_date=new_date,
+          remove_old=False,
+          remove_new=True,
         )
-        potential_duplicates.append((old, new))
-        break
-    # Iterate and report progression
-    im1_index -= 1
-    if (nb_indexes - im1_index) % 100 == 0:
+      )
+      potential_duplicates.append((old, new))
+    if processed_count % 100 == 0:
+      if duplicate_batch:
+        duplicates.extend(duplicate_batch)
+        duplicate_batch = []
       mp_progression_queue.put((100, potential_duplicates))
       potential_duplicates = []
-  mp_progression_queue.put((nb_indexes % 100, potential_duplicates))
+  if duplicate_batch:
+    duplicates.extend(duplicate_batch)
+  mp_progression_queue.put((image_count % 100, potential_duplicates))
 
 # Report multiprocess scan progression
 def report_progression(progression, percentage, mp_progression_queue):
-  while not mp_progression_queue.empty():
-    nb_images_processed, list_duplicates = mp_progression_queue.get_nowait()
+  while True:
+    try:
+      nb_images_processed, list_duplicates = mp_progression_queue.get_nowait()
+    except Empty:
+      break
     progression += nb_images_processed
     for old_path, new_path in list_duplicates:
       logs(f"Potential duplicated images: {old_path} {new_path}", level="OK")
@@ -208,7 +217,7 @@ def iterate_paths():
       pixels_cache = np.full((len(image_batch),), None, dtype=object)
       process = multiprocessing.Process(
         target=iterate_queue,
-        args=(image_batch, pixels_cache, images_nb-1, shape, mp_progression_queue, duplicates)
+        args=(image_batch, pixels_cache, shape, mp_progression_queue, duplicates)
       )
       processes.append(process)
       process.start()
@@ -219,12 +228,13 @@ def iterate_paths():
     for shape in images[ext]:
       queue = images[ext][shape]
       pixels_cache = np.full((nb_images[ext][shape],), None, dtype=object)
-      iterate_queue(queue, pixels_cache, nb_images[ext][shape]-1, shape, mp_progression_queue, duplicates)
+      iterate_queue(queue, pixels_cache, shape, mp_progression_queue, duplicates)
       progression, percentage = report_progression(progression, percentage, mp_progression_queue)
   # Wait for subprocesses to end
   while any(p.is_alive() for p in processes):
     progression, percentage = report_progression(progression, percentage, mp_progression_queue)
     time.sleep(1)
+  progression, percentage = report_progression(progression, percentage, mp_progression_queue)
   logs("100 %. Done.", level="SUCCESS")
   logs("Iterating over videos...", level="INFO")
   for ext in videos:

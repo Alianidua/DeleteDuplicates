@@ -68,10 +68,24 @@ class DuplicatesMover:
     )
     # Fonts
     small_font = tk.font.Font(size=15)
+    link_font = tk.font.Font(size=12, underline=True)
     font = tk.font.Font(size=20)
     # Buttons frame
     bottom_frame = tk.Frame(tk_root)
     bottom_frame.pack(side=tk.BOTTOM, pady=20)
+    self.open_old_link = tk.Label(
+      bottom_frame, text="Loading...", width=26, wraplength=280, justify=tk.LEFT,
+      fg="blue", activeforeground="#0b3d91", cursor="hand2", font=link_font
+    )
+    self.open_old_link.pack(side=tk.LEFT, padx=10)
+    self.open_old_link.bind("<Button-1>", lambda event: self.open_compared_file("old"))
+    self.open_new_link = tk.Label(
+      bottom_frame, text="Loading...", width=26, wraplength=280, justify=tk.LEFT,
+      fg="blue", activeforeground="#0b3d91", cursor="hand2", font=link_font
+    )
+    self.open_new_link.pack(side=tk.LEFT, padx=10)
+    self.open_new_link.bind("<Button-1>", lambda event: self.open_compared_file("new"))
+    self.displayed_files = {}
     buttons_frame = tk.Frame(bottom_frame)
     buttons_frame.pack(side=tk.LEFT)
     # Check button old
@@ -144,6 +158,10 @@ class DuplicatesMover:
           continue
         old_image, old_title, new_image, new_title = self.image_dict[image_i]
         self.current_showed_i = self.i.value
+        files = self.duplicates[image_i]
+        self.displayed_files = {"old": files.old, "new": files.new}
+        self.open_old_link.configure(text=os.path.basename(files.old))
+        self.open_new_link.configure(text=os.path.basename(files.new))
         # Update plots
         self.old_image.set_data(old_image)
         self.new_image.set_data(new_image)
@@ -168,6 +186,15 @@ class DuplicatesMover:
   def check_new_image_keybind_event(self, event):
     self.remove_new.set(not self.remove_new.get())
     self.duplicates[self.i.value].remove_new = self.remove_new.get()
+
+  def open_compared_file(self, side):
+    path = self.displayed_files.get(side)
+    if path is None:
+      return
+    try:
+      os.startfile(path)
+    except OSError as error:
+      logs(f"Could not open '{path}': {error}", level="WARN")
 
   def move_event(self, i):
     with self.i.get_lock():  # Ensure safe access to the shared value
